@@ -11,8 +11,8 @@ export interface ISingleEdge {
   readonly value: number | undefined;
 }
 
-export abstract class Single extends Match {
-  protected readonly edges: ISingleEdge[] = [];
+export class Single extends Match {
+  public readonly edges: ISingleEdge[] = [];
 
   public addEdge(edge: ISingleEdge): void {
     this.edges.push(edge);

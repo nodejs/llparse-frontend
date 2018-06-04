@@ -78,23 +78,21 @@ export class Frontend {
 
     const id = (): IUniqueName => this.id.id(node.name);
 
-    const nodeImpl = this.implementation.node;
-
     // Instantiate target class
     if (node instanceof source.node.Error) {
-      result = new nodeImpl.Error(id(), node.code, node.reason);
+      result = new frontend.node.Error(id(), node.code, node.reason);
     } else if (node instanceof source.node.Pause) {
-      result = new nodeImpl.Pause(id(), node.code, node.reason);
+      result = new frontend.node.Pause(id(), node.code, node.reason);
     } else if (node instanceof source.node.Consume) {
-      result = new nodeImpl.Consume(id(), node.field);
+      result = new frontend.node.Consume(id(), node.field);
     } else if (node instanceof source.node.SpanStart) {
-      result = new nodeImpl.SpanStart(id(), this.spanMap.get(node.span)!,
+      result = new frontend.node.SpanStart(id(), this.spanMap.get(node.span)!,
         this.translateCode(node.span.callback) as frontend.code.Span);
     } else if (node instanceof source.node.SpanEnd) {
-      result = new nodeImpl.SpanEnd(id(), this.spanMap.get(node.span)!,
+      result = new frontend.node.SpanEnd(id(), this.spanMap.get(node.span)!,
         this.translateCode(node.span.callback) as frontend.code.Span);
     } else if (node instanceof source.node.Invoke) {
-      result = new nodeImpl.Invoke(id(), this.translateCode(node.code));
+      result = new frontend.node.Invoke(id(), this.translateCode(node.code));
     } else if (node instanceof source.node.Match) {
       result = this.translateMatch(node);
     } else {
@@ -324,35 +322,34 @@ export class Frontend {
 
   private translateCode(code: source.code.Code): frontend.code.Code {
     const prefixed = this.codeId.id(code.name).name;
-    const codeImpl = this.implementation.code;
 
     let res: frontend.code.Code;
     if (code instanceof source.code.IsEqual) {
-      res = new codeImpl.IsEqual(prefixed, code.field, code.value);
+      res = new frontend.code.IsEqual(prefixed, code.field, code.value);
     } else if (code instanceof source.code.Load) {
-      res = new codeImpl.Load(prefixed, code.field);
+      res = new frontend.code.Load(prefixed, code.field);
     } else if (code instanceof source.code.MulAdd) {
-      res = new codeImpl.MulAdd(prefixed, code.field, {
+      res = new frontend.code.MulAdd(prefixed, code.field, {
         base: code.options.base,
         max: code.options.max,
         signed: code.options.signed === undefined ? true : code.options.signed,
       });
     } else if (code instanceof source.code.Or) {
-      res = new codeImpl.Or(prefixed, code.field, code.value);
+      res = new frontend.code.Or(prefixed, code.field, code.value);
     } else if (code instanceof source.code.Store) {
-      res = new codeImpl.Store(prefixed, code.field);
+      res = new frontend.code.Store(prefixed, code.field);
     } else if (code instanceof source.code.Test) {
-      res = new codeImpl.Test(prefixed, code.field, code.value);
+      res = new frontend.code.Test(prefixed, code.field, code.value);
     } else if (code instanceof source.code.Update) {
-      res = new codeImpl.Update(prefixed, code.field, code.value);
+      res = new frontend.code.Update(prefixed, code.field, code.value);
 
     // External callbacks
     } else if (code instanceof source.code.Match) {
-      res = new codeImpl.Match(code.name);
+      res = new frontend.code.Match(code.name);
     } else if (code instanceof source.code.Span) {
-      res = new codeImpl.Span(code.name);
+      res = new frontend.code.Span(code.name);
     } else if (code instanceof source.code.Value) {
-      res = new codeImpl.Value(code.name);
+      res = new frontend.code.Value(code.name);
     } else {
       throw new Error(`Unsupported code: "${code.name}"`);
     }
@@ -368,11 +365,10 @@ export class Frontend {
 
   private translateTransform(transform?: source.transform.Transform)
     : frontend.transform.Transform {
-    const transformImpl = this.implementation.transform;
     if (transform === undefined) {
-      return new transformImpl.ID();
+      return new frontend.transform.ID();
     } else if (transform.name === 'to_lower_unsafe') {
-      return new transformImpl.ToLowerUnsafe();
+      return new frontend.transform.ToLowerUnsafe();
     } else {
       throw new Error(`Unsupported transform: "${transform.name}"`);
     }

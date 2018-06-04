@@ -18,9 +18,9 @@ function toOptionsKey(options: IMulAddOptions): string {
   return res;
 }
 
-export abstract class MulAdd extends Field {
+export class MulAdd extends Field {
   constructor(name: string, field: string,
-              private readonly options: IMulAddOptions) {
+              public readonly options: IMulAddOptions) {
     super('value', `mul_add_${field}_${toOptionsKey(options)}`, name, field);
   }
 }

@@ -10,10 +10,10 @@ export interface ISequenceEdge {
   readonly value: number | undefined;
 }
 
-export abstract class Sequence extends Match {
-  protected edge?: ISequenceEdge;
+export class Sequence extends Match {
+  public edge?: ISequenceEdge;
 
-  constructor(id: IUniqueName, private readonly select: Buffer) {
+  constructor(id: IUniqueName, public readonly select: Buffer) {
     super(id);
   }
 

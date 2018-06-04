@@ -1,4 +1,4 @@
 import { Node } from './base';
 
-export abstract class Empty extends Node {
+export class Empty extends Node {
 }

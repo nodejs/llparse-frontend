@@ -6,7 +6,7 @@ export interface IOtherwiseEdge {
 }
 
 export abstract class Node {
-  protected otherwise: IOtherwiseEdge | undefined;
+  public otherwise: IOtherwiseEdge | undefined;
 
   constructor(public readonly id: IUniqueName) {
   }

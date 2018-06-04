@@ -7,10 +7,10 @@ export interface IInvokeEdge {
   readonly node: Node;
 }
 
-export abstract class Invoke extends Node {
-  protected readonly edges: IInvokeEdge[] = [];
+export class Invoke extends Node {
+  public readonly edges: IInvokeEdge[] = [];
 
-  constructor(id: IUniqueName, protected readonly code: Code) {
+  constructor(id: IUniqueName, public readonly code: Code) {
     super(id);
   }
 

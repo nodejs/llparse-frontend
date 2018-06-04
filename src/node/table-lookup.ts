@@ -10,8 +10,8 @@ export interface ITableEdge {
   readonly noAdvance: boolean;
 }
 
-export abstract class TableLookup extends Match {
-  protected readonly edges: ITableEdge[] = [];
+export class TableLookup extends Match {
+  public readonly edges: ITableEdge[] = [];
 
   public addEdge(edge: ITableEdge): void {
     this.edges.push(edge);
