@@ -1,6 +1,6 @@
-import { Node } from './base';
-import { IUniqueName } from '../utils';
 import { Code } from '../code';
+import { IUniqueName } from '../utils';
+import { Node } from './base';
 
 export interface IInvokeEdge {
   readonly code: number;

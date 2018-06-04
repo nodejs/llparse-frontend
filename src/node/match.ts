@@ -1,5 +1,5 @@
-import { Node } from './base';
 import { Transform } from '../transform';
+import { Node } from './base';
 
 export abstract class Match extends Node {
   protected transform?: Transform;

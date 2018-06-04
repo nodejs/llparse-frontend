@@ -1,9 +1,9 @@
 import * as assert from 'assert';
 import { Buffer } from 'buffer';
 
+import { IUniqueName } from '../utils';
 import { Node } from './base';
 import { Match } from './match';
-import { IUniqueName } from '../utils';
 
 export interface ISequenceEdge {
   readonly node: Node;

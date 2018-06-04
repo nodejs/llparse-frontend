@@ -1,8 +1,8 @@
 import * as assert from 'assert';
 
+import { IUniqueName } from '../utils';
 import { Node } from './base';
 import { Match } from './match';
-import { IUniqueName } from '../utils';
 
 export interface ITableEdge {
   readonly keys: ReadonlyArray<number>;
