@@ -15,7 +15,6 @@ export interface INodeImplementation {
   readonly empty: new() => Empty;
   readonly error: new() => ErrorNode;
   readonly invoke: new() => Invoke;
-  readonly match: new() => Match;
   readonly pause: new() => Pause;
   readonly sequence: new() => Sequence;
   readonly single: new() => Single;
