@@ -2,7 +2,7 @@
   "name": "llparse-frontend",
   "version": "1.0.0",
   "description": "Frontend for LLParse compiler",
-  "main": "lib/api.js",
+  "main": "lib/frontend.js",
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf lib",

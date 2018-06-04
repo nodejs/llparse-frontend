@@ -1,7 +1,7 @@
 import { IsEqual } from './is-equal';
 import { Load } from './load';
 import { Match } from './match';
-import { MulAdd } from './mul-add';
+import { IMulAddOptions, MulAdd } from './mul-add';
 import { Or } from './or';
 import { Span } from './span';
 import { Store } from './store';
@@ -10,14 +10,15 @@ import { Update } from './update';
 import { Value } from './value';
 
 export interface ICodeImplementation {
-  readonly isEqual: new() => IsEqual;
-  readonly load: new() => Load;
-  readonly match: new() => Match;
-  readonly mulAdd: new() => MulAdd;
-  readonly or: new() => Or;
-  readonly span: new() => Span;
-  readonly store: new() => Store;
-  readonly test: new() => Test;
-  readonly update: new() => Update;
-  readonly value: new() => Value;
+  readonly isEqual: new(name: string, field: string, value: number) => IsEqual;
+  readonly load: new(name: string, field: string) => Load;
+  readonly match: new(name: string) => Match;
+  readonly mulAdd: new(name: string, field: string,
+                       options: IMulAddOptions) => MulAdd;
+  readonly or: new(name: string, field: string, value: number) => Or;
+  readonly span: new(name: string) => Span;
+  readonly store: new(name: string, field: string) => Store;
+  readonly test: new(name: string, field: string, value: number) => Test;
+  readonly update: new(name: string, field: string, value: number) => Update;
+  readonly value: new(name: string) => Value;
 }
