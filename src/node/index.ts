@@ -2,7 +2,6 @@ export * from './base';
 export * from './consume';
 export * from './empty';
 export * from './error';
-export * from './implementation';
 export * from './invoke';
 export * from './match';
 export * from './pause';

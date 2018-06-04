@@ -17,13 +17,19 @@ export {
   SpanField,
 };
 
-export interface IImplementation {
-  readonly code: frontend.code.ICodeImplementation;
-  readonly node: frontend.node.INodeImplementation;
-  readonly transform: frontend.transform.ITransformImplementation;
+// Minimum number of cases of `single` node to make it eligable for
+// `TableLookup` optimization
+export const DEFAULT_MIN_TABLE_SIZE = 32;
+
+// Maximum width of entry in a table for a `TableLookup` optimization
+export const DEFAULT_MAX_TABLE_WIDTH = 4;
+
+export interface IFrontendLazyOptions {
+  readonly maxTableElemWidth?: number;
+  readonly minTableSize?: number;
 }
 
-export interface IFrontendOptions {
+interface IFrontendOptions {
   readonly maxTableElemWidth: number;
   readonly minTableSize: number;
 }
@@ -37,6 +43,8 @@ interface ITableLookupTarget {
 }
 
 export class Frontend {
+  private readonly options: IFrontendOptions;
+
   private readonly id: Identifier = new Identifier(this.prefix + '__n_');
   private readonly codeId: Identifier = new Identifier(this.prefix + '__c_');
   private readonly map: Map<source.node.Node, frontend.node.Node> = new Map();
@@ -44,9 +52,15 @@ export class Frontend {
   private readonly codeCache: Map<string, frontend.code.Code> = new Map();
 
   constructor(private readonly prefix: string,
-              private readonly implementation: IImplementation,
-              private readonly options: IFrontendOptions) {
-    assert(0 < options.maxTableElemWidth,
+              options: IFrontendLazyOptions=  {}) {
+    this.options = {
+      maxTableElemWidth: options.maxTableElemWidth === undefined ?
+        DEFAULT_MAX_TABLE_WIDTH : options.maxTableElemWidth,
+      minTableSize: options.minTableSize === undefined ?
+        DEFAULT_MIN_TABLE_SIZE : options.minTableSize,
+    };
+
+    assert(0 < this.options.maxTableElemWidth,
       'Invalid `options.maxTableElemWidth`, must be positive');
   }
 
@@ -159,7 +173,7 @@ export class Frontend {
     const otherwise = node.getOtherwiseEdge();
     const trieNode = trie.build(Array.from(node));
     if (trieNode === undefined) {
-      return new this.implementation.node.Empty(this.id.id(node.name));
+      return new frontend.node.Empty(this.id.id(node.name));
     }
 
     const children: frontend.node.Match[] = [];
@@ -192,7 +206,7 @@ export class Frontend {
       return maybeTable;
     }
 
-    const single = new this.implementation.node.Single(this.id.id(node.name));
+    const single = new frontend.node.Single(this.id.id(node.name));
     children.push(single);
 
     // Break the loop
@@ -275,7 +289,7 @@ export class Frontend {
       return undefined;
     }
 
-    const table = new this.implementation.node.TableLookup(
+    const table = new frontend.node.TableLookup(
         this.id.id(node.name));
     children.push(table);
 
@@ -301,7 +315,7 @@ export class Frontend {
   private translateSequence(node: source.node.Match, trie: TrieSequence,
                             children: frontend.node.Match[])
     : frontend.node.Match {
-    const sequence = new this.implementation.node.Sequence(
+    const sequence = new frontend.node.Sequence(
         this.id.id(node.name), trie.select);
     children.push(sequence);
 
