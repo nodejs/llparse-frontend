@@ -1,5 +1,11 @@
 import { Node } from './base';
+import { IUniqueName } from '../utils';
+import { Span } from '../code';
+import { SpanField } from '../span-field';
 
 export abstract class SpanEnd extends Node {
-  // TODO(indutny): Implement me!
+  constructor(id: IUniqueName, protected readonly field: SpanField,
+              protected readonly callback: Span) {
+    super(id);
+  }
 }

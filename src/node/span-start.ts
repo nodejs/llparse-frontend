@@ -1,5 +1,8 @@
 import { Node } from './base';
 
 export abstract class SpanStart extends Node {
-  // TODO(indutny): Implement me!
+  constructor(id: IUniqueName, protected readonly field: SpanField,
+              protected readonly callback: Span) {
+    super(id);
+  }
 }
