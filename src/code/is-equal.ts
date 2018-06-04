@@ -1,0 +1,9 @@
+import { toCacheKey } from '../utils';
+import { FieldValue } from './field-value';
+
+export abstract class IsEqual extends FieldValue {
+  constructor(name: string, field: string, value: number) {
+    super('match', `is_equal_${field}_${toCacheKey(value)}`, name, field,
+      value);
+  }
+}

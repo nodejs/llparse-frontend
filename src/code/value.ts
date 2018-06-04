@@ -1,7 +1,7 @@
 import { External } from './external';
 
-export abstract class Span extends External {
+export abstract class Value extends External {
   constructor(name: string) {
-    super('span', name);
+    super('value', name);
   }
 }
