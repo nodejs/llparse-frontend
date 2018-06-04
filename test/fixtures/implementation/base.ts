@@ -1,6 +1,6 @@
-import { Implementation as Base, node } from '../../../src/frontend';
+import { Implementation as BaseImpl, node } from '../../../src/frontend';
 
 export abstract class Implementation<N extends node.Node<Implementation<N>>>
-  extends Base<N> {
+  extends BaseImpl<N> {
   public abstract build(): string;
 }

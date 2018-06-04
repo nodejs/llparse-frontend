@@ -1,4 +1,3 @@
-export * from './base';
 export * from './consume';
 export * from './empty';
 export * from './error';
