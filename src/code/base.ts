@@ -5,6 +5,4 @@ export abstract class Code {
               public readonly cacheKey: string,
               public readonly name: string) {
   }
-
-  public abstract build<Context, Declaration>(ctx: Context): Declaration;
 }

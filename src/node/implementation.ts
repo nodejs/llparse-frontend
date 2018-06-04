@@ -16,18 +16,18 @@ import { SpanStart } from './span-start';
 import { TableLookup } from './table-lookup';
 
 export interface INodeImplementation {
-  readonly consume: new(id: IUniqueName, field: string) => Consume;
-  readonly empty: new(id: IUniqueName) => Empty;
-  readonly error: new(id: IUniqueName, code: number,
+  readonly Consume: new(id: IUniqueName, field: string) => Consume;
+  readonly Empty: new(id: IUniqueName) => Empty;
+  readonly Error: new(id: IUniqueName, code: number,
                       reason: string) => ErrorNode;
-  readonly invoke: new(id: IUniqueName, code: Code) => Invoke;
-  readonly pause: new(id: IUniqueName, code: number,
+  readonly Invoke: new(id: IUniqueName, code: Code) => Invoke;
+  readonly Pause: new(id: IUniqueName, code: number,
                       reason: string) => Pause;
-  readonly sequence: new(id: IUniqueName, select: Buffer) => Sequence;
-  readonly single: new(id: IUniqueName) => Single;
-  readonly spanEnd: new(id: IUniqueName, field: SpanField,
+  readonly Sequence: new(id: IUniqueName, select: Buffer) => Sequence;
+  readonly Single: new(id: IUniqueName) => Single;
+  readonly SpanEnd: new(id: IUniqueName, field: SpanField,
                         callback: Span) => SpanEnd;
-  readonly spanStart: new(id: IUniqueName, field: SpanField,
+  readonly SpanStart: new(id: IUniqueName, field: SpanField,
                           callback: Span) => SpanStart;
-  readonly tableLookup: new(id: IUniqueName) => TableLookup;
+  readonly TableLookup: new(id: IUniqueName) => TableLookup;
 }

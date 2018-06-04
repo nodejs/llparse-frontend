@@ -10,15 +10,15 @@ import { Update } from './update';
 import { Value } from './value';
 
 export interface ICodeImplementation {
-  readonly isEqual: new(name: string, field: string, value: number) => IsEqual;
-  readonly load: new(name: string, field: string) => Load;
-  readonly match: new(name: string) => Match;
-  readonly mulAdd: new(name: string, field: string,
+  readonly IsEqual: new(name: string, field: string, value: number) => IsEqual;
+  readonly Load: new(name: string, field: string) => Load;
+  readonly Match: new(name: string) => Match;
+  readonly MulAdd: new(name: string, field: string,
                        options: IMulAddOptions) => MulAdd;
-  readonly or: new(name: string, field: string, value: number) => Or;
-  readonly span: new(name: string) => Span;
-  readonly store: new(name: string, field: string) => Store;
-  readonly test: new(name: string, field: string, value: number) => Test;
-  readonly update: new(name: string, field: string, value: number) => Update;
-  readonly value: new(name: string) => Value;
+  readonly Or: new(name: string, field: string, value: number) => Or;
+  readonly Span: new(name: string) => Span;
+  readonly Store: new(name: string, field: string) => Store;
+  readonly Test: new(name: string, field: string, value: number) => Test;
+  readonly Update: new(name: string, field: string, value: number) => Update;
+  readonly Value: new(name: string) => Value;
 }

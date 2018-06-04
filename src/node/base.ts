@@ -14,6 +14,4 @@ export abstract class Node {
   public setOtherwise(node: Node, noAdvance: boolean) {
     this.otherwise = { node, noAdvance };
   }
-
-  public abstract build<Context, Declaration>(ctx: Context): Declaration;
 }

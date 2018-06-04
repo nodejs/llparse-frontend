@@ -17,7 +17,7 @@ export {
   SpanField,
 };
 
-export interface IImplementations {
+export interface IImplementation {
   readonly code: frontend.code.ICodeImplementation;
   readonly node: frontend.node.INodeImplementation;
   readonly transform: frontend.transform.ITransformImplementation;
@@ -44,7 +44,7 @@ export class Frontend {
   private readonly codeCache: Map<string, frontend.code.Code> = new Map();
 
   constructor(private readonly prefix: string,
-              private readonly implementations: IImplementations,
+              private readonly implementation: IImplementation,
               private readonly options: IFrontendOptions) {
     assert(0 < options.maxTableElemWidth,
       'Invalid `options.maxTableElemWidth`, must be positive');
@@ -78,23 +78,23 @@ export class Frontend {
 
     const id = (): IUniqueName => this.id.id(node.name);
 
-    const nodeImpl = this.implementations.node;
+    const nodeImpl = this.implementation.node;
 
     // Instantiate target class
     if (node instanceof source.node.Error) {
-      result = new nodeImpl.error(id(), node.code, node.reason);
+      result = new nodeImpl.Error(id(), node.code, node.reason);
     } else if (node instanceof source.node.Pause) {
-      result = new nodeImpl.pause(id(), node.code, node.reason);
+      result = new nodeImpl.Pause(id(), node.code, node.reason);
     } else if (node instanceof source.node.Consume) {
-      result = new nodeImpl.consume(id(), node.field);
+      result = new nodeImpl.Consume(id(), node.field);
     } else if (node instanceof source.node.SpanStart) {
-      result = new nodeImpl.spanStart(id(), this.spanMap.get(node.span)!,
+      result = new nodeImpl.SpanStart(id(), this.spanMap.get(node.span)!,
         this.translateCode(node.span.callback) as frontend.code.Span);
     } else if (node instanceof source.node.SpanEnd) {
-      result = new nodeImpl.spanEnd(id(), this.spanMap.get(node.span)!,
+      result = new nodeImpl.SpanEnd(id(), this.spanMap.get(node.span)!,
         this.translateCode(node.span.callback) as frontend.code.Span);
     } else if (node instanceof source.node.Invoke) {
-      result = new nodeImpl.invoke(id(), this.translateCode(node.code));
+      result = new nodeImpl.Invoke(id(), this.translateCode(node.code));
     } else if (node instanceof source.node.Match) {
       result = this.translateMatch(node);
     } else {
@@ -161,7 +161,7 @@ export class Frontend {
     const otherwise = node.getOtherwiseEdge();
     const trieNode = trie.build(Array.from(node));
     if (trieNode === undefined) {
-      return new this.implementations.node.empty(this.id.id(node.name));
+      return new this.implementation.node.Empty(this.id.id(node.name));
     }
 
     const children: frontend.node.Match[] = [];
@@ -194,7 +194,7 @@ export class Frontend {
       return maybeTable;
     }
 
-    const single = new this.implementations.node.single(this.id.id(node.name));
+    const single = new this.implementation.node.Single(this.id.id(node.name));
     children.push(single);
 
     // Break the loop
@@ -277,7 +277,7 @@ export class Frontend {
       return undefined;
     }
 
-    const table = new this.implementations.node.tableLookup(
+    const table = new this.implementation.node.TableLookup(
         this.id.id(node.name));
     children.push(table);
 
@@ -303,7 +303,7 @@ export class Frontend {
   private translateSequence(node: source.node.Match, trie: TrieSequence,
                             children: frontend.node.Match[])
     : frontend.node.Match {
-    const sequence = new this.implementations.node.sequence(
+    const sequence = new this.implementation.node.Sequence(
         this.id.id(node.name), trie.select);
     children.push(sequence);
 
@@ -324,35 +324,35 @@ export class Frontend {
 
   private translateCode(code: source.code.Code): frontend.code.Code {
     const prefixed = this.codeId.id(code.name).name;
-    const codeImpl = this.implementations.code;
+    const codeImpl = this.implementation.code;
 
     let res: frontend.code.Code;
     if (code instanceof source.code.IsEqual) {
-      res = new codeImpl.isEqual(prefixed, code.field, code.value);
+      res = new codeImpl.IsEqual(prefixed, code.field, code.value);
     } else if (code instanceof source.code.Load) {
-      res = new codeImpl.load(prefixed, code.field);
+      res = new codeImpl.Load(prefixed, code.field);
     } else if (code instanceof source.code.MulAdd) {
-      res = new codeImpl.mulAdd(prefixed, code.field, {
+      res = new codeImpl.MulAdd(prefixed, code.field, {
         base: code.options.base,
         max: code.options.max,
         signed: code.options.signed === undefined ? true : code.options.signed,
       });
     } else if (code instanceof source.code.Or) {
-      res = new codeImpl.or(prefixed, code.field, code.value);
+      res = new codeImpl.Or(prefixed, code.field, code.value);
     } else if (code instanceof source.code.Store) {
-      res = new codeImpl.store(prefixed, code.field);
+      res = new codeImpl.Store(prefixed, code.field);
     } else if (code instanceof source.code.Test) {
-      res = new codeImpl.test(prefixed, code.field, code.value);
+      res = new codeImpl.Test(prefixed, code.field, code.value);
     } else if (code instanceof source.code.Update) {
-      res = new codeImpl.update(prefixed, code.field, code.value);
+      res = new codeImpl.Update(prefixed, code.field, code.value);
 
     // External callbacks
     } else if (code instanceof source.code.Match) {
-      res = new codeImpl.match(code.name);
+      res = new codeImpl.Match(code.name);
     } else if (code instanceof source.code.Span) {
-      res = new codeImpl.span(code.name);
+      res = new codeImpl.Span(code.name);
     } else if (code instanceof source.code.Value) {
-      res = new codeImpl.value(code.name);
+      res = new codeImpl.Value(code.name);
     } else {
       throw new Error(`Unsupported code: "${code.name}"`);
     }
@@ -368,11 +368,11 @@ export class Frontend {
 
   private translateTransform(transform?: source.transform.Transform)
     : frontend.transform.Transform {
-    const transformImpl = this.implementations.transform;
+    const transformImpl = this.implementation.transform;
     if (transform === undefined) {
-      return new transformImpl.id();
+      return new transformImpl.ID();
     } else if (transform.name === 'to_lower_unsafe') {
-      return new transformImpl.toLowerUnsafe();
+      return new transformImpl.ToLowerUnsafe();
     } else {
       throw new Error(`Unsupported transform: "${transform.name}"`);
     }
