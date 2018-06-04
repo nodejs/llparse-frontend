@@ -51,11 +51,11 @@ export class Frontend {
       return span;
     });
 
-    return new this.implementations.node.empty();
+    return new this.implementations.node.empty({ name: '', originalName: '' });
   }
 
   private translate(node: source.node.Node): frontend.node.Node {
-    return new this.implementations.node.empty();
+    return new this.implementations.node.empty({ name: '', originalName: '' });
   }
 
   private translateCode(code: source.code.Code): frontend.code.Code {
