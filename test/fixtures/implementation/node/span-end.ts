@@ -1,7 +1,8 @@
 import { node } from '../../../../src/frontend';
+import { Implementation } from '../base';
 
-export class SpanEnd extends node.SpanEnd {
-  public build(ctx: string[]): string {
+export class SpanEnd extends Implementation<node.SpanEnd<SpanEnd>> {
+  public build(): string {
     return '';
   }
 }

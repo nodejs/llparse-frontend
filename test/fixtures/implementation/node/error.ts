@@ -1,7 +1,8 @@
 import { node } from '../../../../src/frontend';
+import { Implementation } from '../base';
 
-class ErrorNode extends node.Error {
-  public build(ctx: string[]): string {
+class ErrorNode extends Implementation<node.Error<ErrorNode>> {
+  public build(): string {
     return '';
   }
 }

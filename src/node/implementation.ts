@@ -1,9 +1,11 @@
 import { Buffer } from 'buffer';
 
 import { Code, Span } from '../code';
+import { Implementation } from '../implementation';
 import { SpanField } from '../span-field';
 import { IUniqueName } from '../utils';
 
+import { Node } from './base';
 import { Consume } from './consume';
 import { Empty } from './empty';
 import { Error as ErrorNode } from './error';
@@ -15,19 +17,15 @@ import { SpanEnd } from './span-end';
 import { SpanStart } from './span-start';
 import { TableLookup } from './table-lookup';
 
-export interface INodeImplementation {
-  readonly Consume: new(id: IUniqueName, field: string) => Consume;
-  readonly Empty: new(id: IUniqueName) => Empty;
-  readonly Error: new(id: IUniqueName, code: number,
-                      reason: string) => ErrorNode;
-  readonly Invoke: new(id: IUniqueName, code: Code) => Invoke;
-  readonly Pause: new(id: IUniqueName, code: number,
-                      reason: string) => Pause;
-  readonly Sequence: new(id: IUniqueName, select: Buffer) => Sequence;
-  readonly Single: new(id: IUniqueName) => Single;
-  readonly SpanEnd: new(id: IUniqueName, field: SpanField,
-                        callback: Span) => SpanEnd;
-  readonly SpanStart: new(id: IUniqueName, field: SpanField,
-                          callback: Span) => SpanStart;
-  readonly TableLookup: new(id: IUniqueName) => TableLookup;
+export interface INodeImplementation<I extends Implementation<Node<I>>> {
+  readonly Consume: new(n: Consume<I>) => I;
+  readonly Empty: new(n: Empty<I>) => I;
+  readonly Error: new(n: ErrorNode<I>) => I;
+  readonly Invoke: new(n: Invoke<I>) => I;
+  readonly Pause: new(n: Pause<I>) => I;
+  readonly Sequence: new(n: Sequence<I>) => I;
+  readonly Single: new(n: Single<I>) => I;
+  readonly SpanEnd: new(n: SpanEnd<I>) => I;
+  readonly SpanStart: new(n: SpanStart<I>) => I;
+  readonly TableLookup: new(n: TableLookup<I>) => I;
 }

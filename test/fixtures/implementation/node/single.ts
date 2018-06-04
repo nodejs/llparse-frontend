@@ -1,7 +1,8 @@
 import { node } from '../../../../src/frontend';
+import { Implementation } from '../base';
 
-export class Single extends node.Single {
-  public build(ctx: string[]): string {
+export class Single extends Implementation<node.Single<Single>> {
+  public build(): string {
     return '';
   }
 }

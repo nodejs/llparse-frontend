@@ -1,20 +1,21 @@
+import { Implementation } from '../implementation';
 import { Code } from '../code';
 import { IUniqueName } from '../utils';
 import { Node } from './base';
 
-export interface IInvokeEdge {
+export interface IInvokeEdge<I extends Implementation<Node<I>>> {
   readonly code: number;
-  readonly node: Node;
+  readonly node: I;
 }
 
-export class Invoke extends Node {
-  public readonly edges: IInvokeEdge[] = [];
+export class Invoke<I extends Implementation<Node<I>>> extends Node<I> {
+  public readonly edges: IInvokeEdge<I>[] = [];
 
   constructor(id: IUniqueName, public readonly code: Code) {
     super(id);
   }
 
-  public addEdge(code: number, node: Node): void {
+  public addEdge(code: number, node: I): void {
     this.edges.push({ code, node });
   }
 }

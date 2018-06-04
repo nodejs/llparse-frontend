@@ -1,17 +1,18 @@
+import { Implementation } from '../implementation';
 import { IUniqueName } from '../utils';
 
-export interface IOtherwiseEdge {
-  readonly node: Node;
+export interface IOtherwiseEdge<I extends Implementation<Node<I>>> {
+  readonly node: I;
   readonly noAdvance: boolean;
 }
 
-export abstract class Node {
-  public otherwise: IOtherwiseEdge | undefined;
+export abstract class Node<I extends Implementation<Node<I>>> {
+  public otherwise: IOtherwiseEdge<I> | undefined;
 
   constructor(public readonly id: IUniqueName) {
   }
 
-  public setOtherwise(node: Node, noAdvance: boolean) {
+  public setOtherwise(node: I, noAdvance: boolean) {
     this.otherwise = { node, noAdvance };
   }
 }
