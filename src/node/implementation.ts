@@ -2,7 +2,6 @@ import { Consume } from './consume';
 import { Empty } from './empty';
 import { Error as ErrorNode } from './error';
 import { Invoke } from './invoke';
-import { Match } from './match';
 import { Pause } from './pause';
 import { Sequence } from './sequence';
 import { Single } from './single';
