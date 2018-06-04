@@ -13,7 +13,7 @@ export interface ISingleEdge<I extends Implementation<Node<I>>> {
 }
 
 export class Single<I extends Implementation<Node<I>>> extends Match<I> {
-  public readonly edges: ISingleEdge<I>[] = [];
+  public readonly edges: Array<ISingleEdge<I>> = [];
 
     public addEdge(edge: ISingleEdge<I>): void {
     this.edges.push(edge);

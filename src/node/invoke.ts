@@ -1,5 +1,5 @@
-import { Implementation } from '../implementation';
 import { Code } from '../code';
+import { Implementation } from '../implementation';
 import { IUniqueName } from '../utils';
 import { Node } from './base';
 
@@ -9,7 +9,7 @@ export interface IInvokeEdge<I extends Implementation<Node<I>>> {
 }
 
 export class Invoke<I extends Implementation<Node<I>>> extends Node<I> {
-  public readonly edges: IInvokeEdge<I>[] = [];
+  public readonly edges: Array<IInvokeEdge<I>> = [];
 
   constructor(id: IUniqueName, public readonly code: Code) {
     super(id);

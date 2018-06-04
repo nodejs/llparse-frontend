@@ -12,7 +12,7 @@ export interface ITableEdge<I extends Implementation<Node<I>>> {
 }
 
 export class TableLookup<I extends Implementation<Node<I>>> extends Match<I> {
-  public readonly edges: ITableEdge<I>[] = [];
+  public readonly edges: Array<ITableEdge<I>> = [];
 
   public addEdge(edge: ITableEdge<I>): void {
     this.edges.push(edge);
