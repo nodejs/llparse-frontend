@@ -5,8 +5,8 @@ import { SpanAllocator } from 'llparse-builder';
 import * as frontend from './namespace/frontend';
 import * as source from './namespace/source';
 import { SpanField } from './span-field';
-import { IUniqueName, Identifier } from './utils';
 import { Trie, TrieEmpty, TrieNode, TrieSequence, TrieSingle } from './trie';
+import { Identifier, IUniqueName } from './utils';
 
 const debug = debugAPI('llparse:translator');
 
