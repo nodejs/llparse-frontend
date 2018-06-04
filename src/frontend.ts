@@ -128,12 +128,14 @@ export class Frontend {
 
       assert(result.length >= 1);
       return result[0];
-    } else if (result instanceof frontend.node.Node) {
+    } else {
+      const resultNode = result as frontend.node.Node;
+
       // Break loops
-      this.map.set(node, result);
+      this.map.set(node, resultNode);
 
       if (otherwise !== undefined) {
-        result.setOtherwise(this.translate(otherwise.node),
+        resultNode.setOtherwise(this.translate(otherwise.node),
           otherwise.noAdvance);
       } else {
         // TODO(indutny): move this to llparse-builder?
@@ -141,17 +143,15 @@ export class Frontend {
           `Node "${node.name}" has no \`.otherwise()\``);
       }
 
-      if (result instanceof frontend.node.Invoke) {
+      if (resultNode instanceof nodeImpl.Invoke) {
         for (const edge of node) {
-          result.addEdge(edge.key as number, this.translate(edge.node));
+          resultNode.addEdge(edge.key as number, this.translate(edge.node));
         }
       } else {
         assert.strictEqual(Array.from(node).length, 0);
       }
 
-      return result;
-    } else {
-      throw new Error('Unreachable');
+      return resultNode;
     }
   }
 
