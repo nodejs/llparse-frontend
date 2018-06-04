@@ -1,10 +1,14 @@
 import * as assert from 'assert';
+import * as debugAPI from 'debug';
 import { SpanAllocator } from 'llparse-builder';
 
 import * as frontend from './namespace/frontend';
 import * as source from './namespace/source';
 import { SpanField } from './span-field';
-import { Identifier } from './utils';
+import { IUniqueName, Identifier } from './utils';
+import { Trie, TrieEmpty, TrieNode, TrieSequence, TrieSingle } from './trie';
+
+const debug = debugAPI('llparse:translator');
 
 export {
   SpanField,
@@ -19,6 +23,14 @@ export interface IImplementations {
 export interface IFrontendOptions {
   readonly maxTableElemWidth: number;
   readonly minTableSize: number;
+}
+
+type IMatchResult = frontend.node.Node | ReadonlyArray<frontend.node.Match>;
+
+interface ITableLookupTarget {
+  readonly keys: number[];
+  readonly noAdvance: boolean;
+  readonly trie: TrieEmpty;
 }
 
 export class Frontend {
@@ -51,14 +63,315 @@ export class Frontend {
       return span;
     });
 
-    return new this.implementations.node.empty({ name: '', originalName: '' });
+    return this.translate(root);
   }
 
   private translate(node: source.node.Node): frontend.node.Node {
-    return new this.implementations.node.empty({ name: '', originalName: '' });
+    if (this.map.has(node)) {
+      return this.map.get(node)!;
+    }
+
+    let result: frontend.node.Node | ReadonlyArray<frontend.node.Match>;
+
+    const id = (): IUniqueName => this.id.id(node.name);
+
+    const nodeImpl = this.implementations.node;
+
+    // Instantiate target class
+    if (node instanceof source.node.Error) {
+      result = new nodeImpl.error(id(), node.code, node.reason);
+    } else if (node instanceof source.node.Pause) {
+      result = new nodeImpl.pause(id(), node.code, node.reason);
+    } else if (node instanceof source.node.Consume) {
+      result = new nodeImpl.consume(id(), node.field);
+    } else if (node instanceof source.node.SpanStart) {
+      result = new nodeImpl.spanStart(id(), this.spanMap.get(node.span)!,
+        this.translateCode(node.span.callback) as frontend.code.Span);
+    } else if (node instanceof source.node.SpanEnd) {
+      result = new nodeImpl.spanEnd(id(), this.spanMap.get(node.span)!,
+        this.translateCode(node.span.callback) as frontend.code.Span);
+    } else if (node instanceof source.node.Invoke) {
+      result = new nodeImpl.invoke(id(), this.translateCode(node.code));
+    } else if (node instanceof source.node.Match) {
+      result = this.translateMatch(node);
+    } else {
+      throw new Error(`Unknown node type for "${node.name}"`);
+    }
+
+    // Initialize result
+    const otherwise = node.getOtherwiseEdge();
+
+    if (Array.isArray(result)) {
+      assert(node instanceof source.node.Match);
+      const match = node as source.node.Match;
+
+      // TODO(indutny): move this to llparse-builder?
+      assert.notStrictEqual(otherwise, undefined,
+        `Node "${node.name}" has no \`.otherwise()\``);
+
+      // Assign otherwise to every node of Trie
+      if (otherwise !== undefined) {
+        for (const child of result) {
+          child.setOtherwise(this.translate(otherwise.node),
+            otherwise.noAdvance);
+        }
+      }
+
+      // Assign transform to every node of Trie
+      const transform = this.translateTransform(match.getTransform());
+      for (const child of result) {
+        child.setTransform(transform);
+      }
+
+      assert(result.length >= 1);
+      return result[0];
+    } else if (result instanceof frontend.node.Node) {
+      // Break loops
+      this.map.set(node, result);
+
+      if (otherwise !== undefined) {
+        result.setOtherwise(this.translate(otherwise.node),
+          otherwise.noAdvance);
+      } else {
+        // TODO(indutny): move this to llparse-builder?
+        assert(node instanceof source.node.Error,
+          `Node "${node.name}" has no \`.otherwise()\``);
+      }
+
+      if (result instanceof frontend.node.Invoke) {
+        for (const edge of node) {
+          result.addEdge(edge.key as number, this.translate(edge.node));
+        }
+      } else {
+        assert.strictEqual(Array.from(node).length, 0);
+      }
+
+      return result;
+    } else {
+      throw new Error('Unreachable');
+    }
+  }
+
+  private translateMatch(node: source.node.Match): IMatchResult {
+    const trie = new Trie(node.name);
+
+    const otherwise = node.getOtherwiseEdge();
+    const trieNode = trie.build(Array.from(node));
+    if (trieNode === undefined) {
+      return new this.implementations.node.empty(this.id.id(node.name));
+    }
+
+    const children: frontend.node.Match[] = [];
+    this.translateTrie(node, trieNode, children);
+    assert(children.length >= 1);
+
+    return children;
+  }
+
+  private translateTrie(node: source.node.Match, trie: TrieNode,
+                        children: frontend.node.Match[]): frontend.node.Node {
+    if (trie instanceof TrieEmpty) {
+      assert(this.map.has(node));
+      return this.translate(trie.node);
+    } else if (trie instanceof TrieSingle) {
+      return this.translateSingle(node, trie, children);
+    } else if (trie instanceof TrieSequence) {
+      return this.translateSequence(node, trie, children);
+    } else {
+      throw new Error('Unknown trie node');
+    }
+  }
+
+  private translateSingle(node: source.node.Match, trie: TrieSingle,
+                          children: frontend.node.Match[])
+    : frontend.node.Match {
+    // See if we can apply TableLookup optimization
+    const maybeTable = this.maybeTableLookup(node, trie, children);
+    if (maybeTable !== undefined) {
+      return maybeTable;
+    }
+
+    const single = new this.implementations.node.single(this.id.id(node.name));
+    children.push(single);
+
+    // Break the loop
+    if (!this.map.has(node)) {
+      this.map.set(node, single);
+    }
+    for (const child of trie.children) {
+      const childNode = this.translateTrie(node, child.node, children);
+
+      single.addEdge({
+        key: child.key,
+        noAdvance: child.noAdvance,
+        node: childNode,
+        value: child.node instanceof TrieEmpty ? child.node.value : undefined,
+      });
+    }
+    return single;
+  }
+
+  private maybeTableLookup(node: source.node.Match, trie: TrieSingle,
+                           children: frontend.node.Match[])
+    : frontend.node.Match | undefined {
+    if (trie.children.length < this.options.minTableSize) {
+      debug('not enough children of "%s" to allocate table, got %d need %d',
+        node.name, trie.children.length, this.options.minTableSize);
+      return undefined;
+    }
+
+    const targets: Map<source.node.Node, ITableLookupTarget> = new Map();
+
+    const bailout = !trie.children.every((child) => {
+      if (!(child.node instanceof TrieEmpty)) {
+        debug('non-leaf trie child of "%s" prevents table allocation',
+          node.name);
+        return false;
+      }
+
+      const empty: TrieEmpty = child.node;
+
+      // We can't pass values from the table yet
+      if (empty.value !== undefined) {
+        debug('value passing trie leaf of "%s" prevents table allocation',
+          node.name);
+        return false;
+      }
+
+      const target = empty.node;
+      if (!targets.has(target)) {
+        targets.set(target, {
+          keys: [ child.key ],
+          noAdvance: child.noAdvance,
+          trie: empty,
+        });
+        return true;
+      }
+
+      const existing = targets.get(target)!;
+
+      // TODO(indutny): just use it as a sub-key?
+      if (existing.noAdvance !== child.noAdvance) {
+        debug(
+          'noAdvance mismatch in a trie leaf of "%s" prevents ' +
+            'table allocation',
+          node.name);
+        return false;
+      }
+
+      existing.keys.push(child.key);
+      return true;
+    });
+
+    if (bailout) {
+      return undefined;
+    }
+
+    // We've width limit for this optimization
+    if (targets.size >= (1 << this.options.maxTableElemWidth)) {
+      debug('too many different trie targets of "%s" for a table allocation',
+        node.name);
+      return undefined;
+    }
+
+    const table = new this.implementations.node.tableLookup(
+        this.id.id(node.name));
+    children.push(table);
+
+    // Break the loop
+    if (!this.map.has(node)) {
+      this.map.set(node, table);
+    }
+
+    targets.forEach((target) => {
+      const next = this.translateTrie(node, target.trie, children);
+
+      table.addEdge({
+        keys: target.keys,
+        noAdvance: target.noAdvance,
+        node: next,
+      });
+    });
+
+    debug('optimized "%s" to a table lookup node', node.name);
+    return table;
+  }
+
+  private translateSequence(node: source.node.Match, trie: TrieSequence,
+                            children: frontend.node.Match[])
+    : frontend.node.Match {
+    const sequence = new this.implementations.node.sequence(
+        this.id.id(node.name), trie.select);
+    children.push(sequence);
+
+    // Break the loop
+    if (!this.map.has(node)) {
+      this.map.set(node, sequence);
+    }
+
+    const childNode = this.translateTrie(node, trie.child, children);
+
+    const value = trie.child instanceof TrieEmpty ?
+      trie.child.value : undefined;
+
+    sequence.setEdge(childNode, value);
+
+    return sequence;
   }
 
   private translateCode(code: source.code.Code): frontend.code.Code {
-    return new this.implementations.code.match('todo');
+    const prefixed = this.codeId.id(code.name).name;
+    const codeImpl = this.implementations.code;
+
+    let res: frontend.code.Code;
+    if (code instanceof source.code.IsEqual) {
+      res = new codeImpl.isEqual(prefixed, code.field, code.value);
+    } else if (code instanceof source.code.Load) {
+      res = new codeImpl.load(prefixed, code.field);
+    } else if (code instanceof source.code.MulAdd) {
+      res = new codeImpl.mulAdd(prefixed, code.field, {
+        base: code.options.base,
+        max: code.options.max,
+        signed: code.options.signed === undefined ? true : code.options.signed,
+      });
+    } else if (code instanceof source.code.Or) {
+      res = new codeImpl.or(prefixed, code.field, code.value);
+    } else if (code instanceof source.code.Store) {
+      res = new codeImpl.store(prefixed, code.field);
+    } else if (code instanceof source.code.Test) {
+      res = new codeImpl.test(prefixed, code.field, code.value);
+    } else if (code instanceof source.code.Update) {
+      res = new codeImpl.update(prefixed, code.field, code.value);
+
+    // External callbacks
+    } else if (code instanceof source.code.Match) {
+      res = new codeImpl.match(code.name);
+    } else if (code instanceof source.code.Span) {
+      res = new codeImpl.span(code.name);
+    } else if (code instanceof source.code.Value) {
+      res = new codeImpl.value(code.name);
+    } else {
+      throw new Error(`Unsupported code: "${code.name}"`);
+    }
+
+    // Re-use instances to build them just once
+    if (this.codeCache.has(res.cacheKey)) {
+      return this.codeCache.get(res.cacheKey)!;
+    }
+
+    this.codeCache.set(res.cacheKey, res);
+    return res;
+  }
+
+  private translateTransform(transform?: source.transform.Transform)
+    : frontend.transform.Transform {
+    const transformImpl = this.implementations.transform;
+    if (transform === undefined) {
+      return new transformImpl.id();
+    } else if (transform.name === 'to_lower_unsafe') {
+      return new transformImpl.toLowerUnsafe();
+    } else {
+      throw new Error(`Unsupported transform: "${transform.name}"`);
+    }
   }
 }
