@@ -10,7 +10,10 @@ import { Identifier, IUniqueName } from './utils';
 
 const debug = debugAPI('llparse:translator');
 
+export { code, node, transform } from './namespace/frontend';
+
 export {
+  IUniqueName,
   SpanField,
 };
 
