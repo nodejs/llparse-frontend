@@ -1,6 +1,8 @@
+import * as assert from 'assert';
+
 import { Builder } from 'llparse-builder';
 
-import { Frontend } from '../src/frontend';
+import { Frontend, node } from '../src/frontend';
 
 describe('llparse-frontend', () => {
   let b: Builder;
@@ -13,8 +15,12 @@ describe('llparse-frontend', () => {
   it('should translate nodes to implementation', () => {
     const root = b.node('root');
 
-    root.skipTo(root);
+    root.match('ab', root);
+    root.match('acd', root);
+    root.match('efg', root);
+    root.otherwise(b.error(123, 'hello'));
 
-    const implRoot = f.build(root);
+    const fRoot = f.build(root);
+    assert(fRoot instanceof node.Single);
   });
 });
