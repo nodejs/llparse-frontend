@@ -24,12 +24,12 @@ export class Sequence extends Match {
     this.edge = { node, value };
   }
 
-  public *getSlots() {
+  protected *buildSlots() {
     const edge = this.edge;
     if (edge !== undefined) {
       yield new Slot(edge.node, (value) => edge.node = value);
     }
 
-    yield* super.getSlots();
+    yield* super.buildSlots();
   }
 }

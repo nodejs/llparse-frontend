@@ -8,17 +8,29 @@ export interface IOtherwiseEdge {
 }
 
 export abstract class Node {
-  public otherwise: IOtherwiseEdge | undefined;
+  private privOtherwise: IOtherwiseEdge | undefined;
+  private privSlots: ReadonlyArray<Slot> | undefined;
 
   constructor(public readonly id: IUniqueName) {
   }
 
   public setOtherwise(node: IWrap<Node>, noAdvance: boolean) {
-    this.otherwise = { node, noAdvance };
+    this.privOtherwise = { node, noAdvance };
   }
 
-  // TODO(indutny): cache
+  public get otherwise(): IOtherwiseEdge | undefined {
+    return this.privOtherwise;
+  }
+
   public *getSlots() {
+    if (this.privSlots === undefined) {
+      this.privSlots = Array.from(this.buildSlots());
+    }
+
+    yield* this.privSlots;
+  }
+
+  protected *buildSlots() {
     const otherwise = this.otherwise;
     if (otherwise !== undefined) {
       yield new Slot(otherwise.node, (value) => otherwise.node = value);

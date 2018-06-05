@@ -20,11 +20,11 @@ export class Invoke extends Node {
     this.edges.push({ code, node });
   }
 
-  public *getSlots() {
+  protected *buildSlots() {
     for (const edge of this.edges) {
       yield new Slot(edge.node, (value) => edge.node = value);
     }
 
-    yield* super.getSlots();
+    yield* super.buildSlots();
   }
 }
