@@ -41,6 +41,11 @@ export interface IFrontendImplementation {
   readonly transform: ITransformImplementation;
 }
 
+export interface IFrontendResult {
+  readonly root: IWrap<frontend.node.Node>;
+  readonly spans: ReadonlyArray<SpanField>;
+}
+
 interface IFrontendOptions {
   readonly maxTableElemWidth: number;
   readonly minTableSize: number;
@@ -81,7 +86,7 @@ export class Frontend {
       'Invalid `options.maxTableElemWidth`, must be positive');
   }
 
-  public compile(root: source.node.Node): WrappedNode {
+  public compile(root: source.node.Node): IFrontendResult {
     debug('checking loops');
     const lc = new LoopChecker();
     lc.check(root);
@@ -113,7 +118,7 @@ export class Frontend {
     const peephole = new Peephole();
     out = peephole.optimize(out, nodes);
 
-    return out;
+    return { spans, root: out };
   }
 
   private translate(node: source.node.Node): WrappedNode {
