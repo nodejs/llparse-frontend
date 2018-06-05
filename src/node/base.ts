@@ -1,7 +1,8 @@
 import { IUniqueName } from '../utils';
+import { IWrap } from '../wrap';
 
 export interface IOtherwiseEdge {
-  readonly node: Node;
+  readonly node: IWrap<Node>;
   readonly noAdvance: boolean;
 }
 
@@ -11,7 +12,7 @@ export abstract class Node {
   constructor(public readonly id: IUniqueName) {
   }
 
-  public setOtherwise(node: Node, noAdvance: boolean) {
+  public setOtherwise(node: IWrap<Node>, noAdvance: boolean) {
     this.otherwise = { node, noAdvance };
   }
 }

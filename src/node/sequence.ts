@@ -2,11 +2,12 @@ import * as assert from 'assert';
 import { Buffer } from 'buffer';
 
 import { IUniqueName } from '../utils';
+import { IWrap } from '../wrap';
 import { Node } from './base';
 import { Match } from './match';
 
 export interface ISequenceEdge {
-  readonly node: Node;
+  readonly node: IWrap<Node>;
   readonly value: number | undefined;
 }
 
@@ -17,7 +18,7 @@ export class Sequence extends Match {
     super(id);
   }
 
-  public setEdge(node: Node, value?: number | undefined) {
+  public setEdge(node: IWrap<Node>, value?: number | undefined) {
     assert.strictEqual(this.edge, undefined);
     this.edge = { node, value };
   }

@@ -4,9 +4,13 @@ import { SpanAllocator } from 'llparse-builder';
 
 import * as frontend from './namespace/frontend';
 import * as source from './namespace/source';
+import {
+  ICodeImplementation, INodeImplementation, ITransformImplementation,
+} from './implementation';
 import { SpanField } from './span-field';
 import { Trie, TrieEmpty, TrieNode, TrieSequence, TrieSingle } from './trie';
 import { Identifier, IUniqueName } from './utils';
+import { IWrap } from './wrap';
 
 const debug = debugAPI('llparse:translator');
 
@@ -29,12 +33,20 @@ export interface IFrontendLazyOptions {
   readonly minTableSize?: number;
 }
 
+export interface IFrontendImplementation {
+  readonly code: ICodeImplementation;
+  readonly node: INodeImplementation;
+  readonly transform: ITransformImplementation;
+}
+
 interface IFrontendOptions {
   readonly maxTableElemWidth: number;
   readonly minTableSize: number;
 }
 
-type IMatchResult = frontend.node.Node | ReadonlyArray<frontend.node.Match>;
+type MatchChildren = IWrap<frontend.node.Match>[];
+type MatchResult = IWrap<frontend.node.Node> |
+                   ReadonlyArray<IWrap<frontend.node.Match>>;
 
 interface ITableLookupTarget {
   readonly keys: number[];
@@ -47,11 +59,14 @@ export class Frontend {
 
   private readonly id: Identifier = new Identifier(this.prefix + '__n_');
   private readonly codeId: Identifier = new Identifier(this.prefix + '__c_');
-  private readonly map: Map<source.node.Node, frontend.node.Node> = new Map();
+  private readonly map: Map<source.node.Node, IWrap<frontend.node.Node>> =
+    new Map();
   private readonly spanMap: Map<source.Span, SpanField> = new Map();
-  private readonly codeCache: Map<string, frontend.code.Code> = new Map();
+  private readonly codeCache: Map<string, IWrap<frontend.code.Code>> =
+    new Map();
 
   constructor(private readonly prefix: string,
+              private readonly implementation: IFrontendImplementation,
               options: IFrontendLazyOptions=  {}) {
     this.options = {
       maxTableElemWidth: options.maxTableElemWidth === undefined ?
@@ -64,13 +79,13 @@ export class Frontend {
       'Invalid `options.maxTableElemWidth`, must be positive');
   }
 
-  public build(root: source.node.Node): frontend.node.Node {
+  public build(root: source.node.Node): IWrap<frontend.node.Node> {
     const spanAllocator = new SpanAllocator();
     const sourceSpans = spanAllocator.allocate(root);
 
     const spans = sourceSpans.concurrency.map((concurrent, index) => {
       const span = new SpanField(index, concurrent.map((sourceSpan) => {
-        return this.translateCode(sourceSpan.callback) as frontend.code.Span;
+        return this.translateSpanCode(sourceSpan.callback);
       }));
 
       for (const sourceSpan of concurrent) {
@@ -83,30 +98,37 @@ export class Frontend {
     return this.translate(root);
   }
 
-  private translate(node: source.node.Node): frontend.node.Node {
+  private translate(node: source.node.Node): IWrap<frontend.node.Node> {
     if (this.map.has(node)) {
       return this.map.get(node)!;
     }
 
-    let result: frontend.node.Node | ReadonlyArray<frontend.node.Match>;
-
     const id = (): IUniqueName => this.id.id(node.name);
 
+    const nodeImpl = this.implementation.node;
+
     // Instantiate target class
+    let result: MatchResult;
     if (node instanceof source.node.Error) {
-      result = new frontend.node.Error(id(), node.code, node.reason);
+      result = new nodeImpl.Error(
+        new frontend.node.Error(id(), node.code, node.reason));
     } else if (node instanceof source.node.Pause) {
-      result = new frontend.node.Pause(id(), node.code, node.reason);
+      result = new nodeImpl.Pause(
+        new frontend.node.Pause(id(), node.code, node.reason));
     } else if (node instanceof source.node.Consume) {
-      result = new frontend.node.Consume(id(), node.field);
+      result = new nodeImpl.Consume(
+        new frontend.node.Consume(id(), node.field));
     } else if (node instanceof source.node.SpanStart) {
-      result = new frontend.node.SpanStart(id(), this.spanMap.get(node.span)!,
-        this.translateCode(node.span.callback) as frontend.code.Span);
+      result = new nodeImpl.SpanStart(
+        new frontend.node.SpanStart(id(), this.spanMap.get(node.span)!,
+          this.translateSpanCode(node.span.callback)));
     } else if (node instanceof source.node.SpanEnd) {
-      result = new frontend.node.SpanEnd(id(), this.spanMap.get(node.span)!,
-        this.translateCode(node.span.callback) as frontend.code.Span);
+      result = new nodeImpl.SpanEnd(
+        new frontend.node.SpanEnd(id(), this.spanMap.get(node.span)!,
+          this.translateSpanCode(node.span.callback)));
     } else if (node instanceof source.node.Invoke) {
-      result = new frontend.node.Invoke(id(), this.translateCode(node.code));
+      result = new nodeImpl.Invoke(
+        new frontend.node.Invoke(id(), this.translateCode(node.code)));
     } else if (node instanceof source.node.Match) {
       result = this.translateMatch(node);
     } else {
@@ -127,7 +149,7 @@ export class Frontend {
       // Assign otherwise to every node of Trie
       if (otherwise !== undefined) {
         for (const child of result) {
-          child.setOtherwise(this.translate(otherwise.node),
+          child.ref.setOtherwise(this.translate(otherwise.node),
             otherwise.noAdvance);
         }
       }
@@ -135,17 +157,20 @@ export class Frontend {
       // Assign transform to every node of Trie
       const transform = this.translateTransform(match.getTransform());
       for (const child of result) {
-        child.setTransform(transform);
+        child.ref.setTransform(transform);
       }
 
       assert(result.length >= 1);
       return result[0];
-    } else if (result instanceof frontend.node.Node) {
+    } else {
+      const single = result as IWrap<frontend.node.Node>;
+      assert(single.ref instanceof frontend.node.Node);
+
       // Break loops
-      this.map.set(node, result);
+      this.map.set(node, single);
 
       if (otherwise !== undefined) {
-        result.setOtherwise(this.translate(otherwise.node),
+        single.ref.setOtherwise(this.translate(otherwise.node),
           otherwise.noAdvance);
       } else {
         // TODO(indutny): move this to llparse-builder?
@@ -153,30 +178,29 @@ export class Frontend {
           `Node "${node.name}" has no \`.otherwise()\``);
       }
 
-      if (result instanceof frontend.node.Invoke) {
+      if (single.ref instanceof frontend.node.Invoke) {
         for (const edge of node) {
-          result.addEdge(edge.key as number, this.translate(edge.node));
+          single.ref.addEdge(edge.key as number, this.translate(edge.node));
         }
       } else {
         assert.strictEqual(Array.from(node).length, 0);
       }
 
-      return result;
-    } else {
-      throw new Error('Unreachable');
+      return single;
     }
   }
 
-  private translateMatch(node: source.node.Match): IMatchResult {
+  private translateMatch(node: source.node.Match): MatchResult {
     const trie = new Trie(node.name);
 
     const otherwise = node.getOtherwiseEdge();
     const trieNode = trie.build(Array.from(node));
     if (trieNode === undefined) {
-      return new frontend.node.Empty(this.id.id(node.name));
+      return new this.implementation.node.Empty(
+        new frontend.node.Empty(this.id.id(node.name)));
     }
 
-    const children: frontend.node.Match[] = [];
+    const children: MatchChildren = [];
     this.translateTrie(node, trieNode, children);
     assert(children.length >= 1);
 
@@ -184,7 +208,7 @@ export class Frontend {
   }
 
   private translateTrie(node: source.node.Match, trie: TrieNode,
-                        children: frontend.node.Match[]): frontend.node.Node {
+                        children: MatchChildren): IWrap<frontend.node.Node> {
     if (trie instanceof TrieEmpty) {
       assert(this.map.has(node));
       return this.translate(trie.node);
@@ -198,15 +222,16 @@ export class Frontend {
   }
 
   private translateSingle(node: source.node.Match, trie: TrieSingle,
-                          children: frontend.node.Match[])
-    : frontend.node.Match {
+                          children: MatchChildren)
+    : IWrap<frontend.node.Match> {
     // See if we can apply TableLookup optimization
     const maybeTable = this.maybeTableLookup(node, trie, children);
     if (maybeTable !== undefined) {
       return maybeTable;
     }
 
-    const single = new frontend.node.Single(this.id.id(node.name));
+    const single = new this.implementation.node.Single(
+        new frontend.node.Single(this.id.id(node.name)));
     children.push(single);
 
     // Break the loop
@@ -216,7 +241,7 @@ export class Frontend {
     for (const child of trie.children) {
       const childNode = this.translateTrie(node, child.node, children);
 
-      single.addEdge({
+      single.ref.addEdge({
         key: child.key,
         noAdvance: child.noAdvance,
         node: childNode,
@@ -227,8 +252,8 @@ export class Frontend {
   }
 
   private maybeTableLookup(node: source.node.Match, trie: TrieSingle,
-                           children: frontend.node.Match[])
-    : frontend.node.Match | undefined {
+                           children: MatchChildren)
+    : IWrap<frontend.node.Match> | undefined {
     if (trie.children.length < this.options.minTableSize) {
       debug('not enough children of "%s" to allocate table, got %d need %d',
         node.name, trie.children.length, this.options.minTableSize);
@@ -289,8 +314,8 @@ export class Frontend {
       return undefined;
     }
 
-    const table = new frontend.node.TableLookup(
-        this.id.id(node.name));
+    const table = new this.implementation.node.TableLookup(
+        new frontend.node.TableLookup(this.id.id(node.name)));
     children.push(table);
 
     // Break the loop
@@ -301,7 +326,7 @@ export class Frontend {
     targets.forEach((target) => {
       const next = this.translateTrie(node, target.trie, children);
 
-      table.addEdge({
+      table.ref.addEdge({
         keys: target.keys,
         noAdvance: target.noAdvance,
         node: next,
@@ -313,10 +338,10 @@ export class Frontend {
   }
 
   private translateSequence(node: source.node.Match, trie: TrieSequence,
-                            children: frontend.node.Match[])
-    : frontend.node.Match {
-    const sequence = new frontend.node.Sequence(
-        this.id.id(node.name), trie.select);
+                            children: MatchChildren)
+    : IWrap<frontend.node.Match> {
+    const sequence = new this.implementation.node.Sequence(
+        new frontend.node.Sequence(this.id.id(node.name), trie.select));
     children.push(sequence);
 
     // Break the loop
@@ -329,60 +354,74 @@ export class Frontend {
     const value = trie.child instanceof TrieEmpty ?
       trie.child.value : undefined;
 
-    sequence.setEdge(childNode, value);
+    sequence.ref.setEdge(childNode, value);
 
     return sequence;
   }
 
-  private translateCode(code: source.code.Code): frontend.code.Code {
+  private translateCode(code: source.code.Code): IWrap<frontend.code.Code> {
     const prefixed = this.codeId.id(code.name).name;
+    const codeImpl = this.implementation.code;
 
-    let res: frontend.code.Code;
+    let res: IWrap<frontend.code.Code>;
     if (code instanceof source.code.IsEqual) {
-      res = new frontend.code.IsEqual(prefixed, code.field, code.value);
+      res = new codeImpl.IsEqual(
+        new frontend.code.IsEqual(prefixed, code.field, code.value));
     } else if (code instanceof source.code.Load) {
-      res = new frontend.code.Load(prefixed, code.field);
+      res = new codeImpl.Load(
+        new frontend.code.Load(prefixed, code.field));
     } else if (code instanceof source.code.MulAdd) {
-      res = new frontend.code.MulAdd(prefixed, code.field, {
+      const m = new frontend.code.MulAdd(prefixed, code.field, {
         base: code.options.base,
         max: code.options.max,
         signed: code.options.signed === undefined ? true : code.options.signed,
       });
+      res = new codeImpl.MulAdd(m);
     } else if (code instanceof source.code.Or) {
-      res = new frontend.code.Or(prefixed, code.field, code.value);
+      res = new codeImpl.Or(
+        new frontend.code.Or(prefixed, code.field, code.value));
     } else if (code instanceof source.code.Store) {
-      res = new frontend.code.Store(prefixed, code.field);
+      res = new codeImpl.Store(
+        new frontend.code.Store(prefixed, code.field));
     } else if (code instanceof source.code.Test) {
-      res = new frontend.code.Test(prefixed, code.field, code.value);
+      res = new codeImpl.Test(
+        new frontend.code.Test(prefixed, code.field, code.value));
     } else if (code instanceof source.code.Update) {
-      res = new frontend.code.Update(prefixed, code.field, code.value);
+      res = new codeImpl.Update(
+        new frontend.code.Update(prefixed, code.field, code.value));
 
     // External callbacks
     } else if (code instanceof source.code.Match) {
-      res = new frontend.code.Match(code.name);
+      res = new codeImpl.Match(new frontend.code.Match(code.name));
     } else if (code instanceof source.code.Span) {
-      res = new frontend.code.Span(code.name);
+      res = new codeImpl.Span(new frontend.code.Span(code.name));
     } else if (code instanceof source.code.Value) {
-      res = new frontend.code.Value(code.name);
+      res = new codeImpl.Value(new frontend.code.Value(code.name));
     } else {
       throw new Error(`Unsupported code: "${code.name}"`);
     }
 
     // Re-use instances to build them just once
-    if (this.codeCache.has(res.cacheKey)) {
-      return this.codeCache.get(res.cacheKey)!;
+    if (this.codeCache.has(res.ref.cacheKey)) {
+      return this.codeCache.get(res.ref.cacheKey)!;
     }
 
-    this.codeCache.set(res.cacheKey, res);
+    this.codeCache.set(res.ref.cacheKey, res);
     return res;
   }
 
+  private translateSpanCode(code: source.code.Span): IWrap<frontend.code.Span> {
+    return this.translateCode(code) as IWrap<frontend.code.Span>;
+  }
+
   private translateTransform(transform?: source.transform.Transform)
-    : frontend.transform.Transform {
+    : IWrap<frontend.transform.Transform> {
+    const transformImpl = this.implementation.transform;
     if (transform === undefined) {
-      return new frontend.transform.ID();
+      return new transformImpl.ID(new frontend.transform.ID());
     } else if (transform.name === 'to_lower_unsafe') {
-      return new frontend.transform.ToLowerUnsafe();
+      return new transformImpl.ToLowerUnsafe(
+        new frontend.transform.ToLowerUnsafe());
     } else {
       throw new Error(`Unsupported transform: "${transform.name}"`);
     }
