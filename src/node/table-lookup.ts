@@ -6,21 +6,35 @@ import { Node } from './base';
 import { Match } from './match';
 import { Slot } from './slot';
 
-export interface ITableEdge {
+interface ITableEdge {
   readonly keys: ReadonlyArray<number>;
   node: IWrap<Node>;
   readonly noAdvance: boolean;
 }
 
-export class TableLookup extends Match {
-  public readonly edges: ITableEdge[] = [];
+export interface IReadonlyTableEdge {
+  readonly keys: ReadonlyArray<number>;
+  readonly node: IWrap<Node>;
+  readonly noAdvance: boolean;
+}
 
-  public addEdge(edge: ITableEdge): void {
-    this.edges.push(edge);
+export class TableLookup extends Match {
+  private readonly privEdges: ITableEdge[] = [];
+
+  public addEdge(edge: IReadonlyTableEdge): void {
+    this.privEdges.push({
+      keys: edge.keys,
+      noAdvance: edge.noAdvance,
+      node: edge.node,
+    });
+  }
+
+  public get edges(): ReadonlyArray<IReadonlyTableEdge> {
+    return this.privEdges;
   }
 
   protected *buildSlots() {
-    for (const edge of this.edges) {
+    for (const edge of this.privEdges) {
       yield new Slot(edge.node, (value) => edge.node = value);
     }
 

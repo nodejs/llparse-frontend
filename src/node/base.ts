@@ -2,7 +2,12 @@ import { IUniqueName } from '../utils';
 import { IWrap } from '../wrap';
 import { Slot } from './slot';
 
-export interface IOtherwiseEdge {
+export interface IReadonlyOtherwiseEdge {
+  readonly node: IWrap<Node>;
+  readonly noAdvance: boolean;
+}
+
+interface IOtherwiseEdge {
   node: IWrap<Node>;
   readonly noAdvance: boolean;
 }
@@ -18,7 +23,7 @@ export abstract class Node {
     this.privOtherwise = { node, noAdvance };
   }
 
-  public get otherwise(): IOtherwiseEdge | undefined {
+  public get otherwise(): IReadonlyOtherwiseEdge | undefined {
     return this.privOtherwise;
   }
 
@@ -31,7 +36,7 @@ export abstract class Node {
   }
 
   protected *buildSlots() {
-    const otherwise = this.otherwise;
+    const otherwise = this.privOtherwise;
     if (otherwise !== undefined) {
       yield new Slot(otherwise.node, (value) => otherwise.node = value);
     }

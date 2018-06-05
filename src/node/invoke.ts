@@ -4,24 +4,33 @@ import { IWrap } from '../wrap';
 import { Node } from './base';
 import { Slot } from './slot';
 
-export interface IInvokeEdge {
+interface IInvokeEdge {
   readonly code: number;
   node: IWrap<Node>;
 }
 
+export interface IReadonlyInvokeEdge {
+  readonly code: number;
+  readonly node: IWrap<Node>;
+}
+
 export class Invoke extends Node {
-  public readonly edges: IInvokeEdge[] = [];
+  private readonly privEdges: IInvokeEdge[] = [];
 
   constructor(id: IUniqueName, public readonly code: IWrap<Code>) {
     super(id);
   }
 
   public addEdge(code: number, node: IWrap<Node>): void {
-    this.edges.push({ code, node });
+    this.privEdges.push({ code, node });
+  }
+
+  public get edges(): ReadonlyArray<IReadonlyInvokeEdge> {
+    return this.privEdges;
   }
 
   protected *buildSlots() {
-    for (const edge of this.edges) {
+    for (const edge of this.privEdges) {
       yield new Slot(edge.node, (value) => edge.node = value);
     }
 
