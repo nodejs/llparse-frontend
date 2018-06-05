@@ -22,7 +22,7 @@ describe('llparse-frontend', () => {
     root.match('efg', root);
     root.otherwise(b.error(123, 'hello'));
 
-    const fRoot = f.build(root) as Node<node.Node>;
+    const fRoot = f.compile(root) as Node<node.Node>;
 
     const out: string[] = [];
     fRoot.build(out);
@@ -49,7 +49,7 @@ describe('llparse-frontend', () => {
     node1.otherwise(node2);
     node2.otherwise(root);
 
-    const fRoot = f.build(root) as Node<node.Node>;
+    const fRoot = f.compile(root) as Node<node.Node>;
 
     const out: string[] = [];
     fRoot.build(out);

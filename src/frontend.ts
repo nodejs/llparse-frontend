@@ -81,7 +81,7 @@ export class Frontend {
       'Invalid `options.maxTableElemWidth`, must be positive');
   }
 
-  public build(root: source.node.Node): WrappedNode {
+  public compile(root: source.node.Node): WrappedNode {
     const spanAllocator = new SpanAllocator();
     const sourceSpans = spanAllocator.allocate(root);
 
