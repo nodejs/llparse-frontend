@@ -11,6 +11,8 @@ import { SpanField } from './span-field';
 import { Trie, TrieEmpty, TrieNode, TrieSequence, TrieSingle } from './trie';
 import { Identifier, IUniqueName } from './utils';
 import { IWrap } from './wrap';
+import { Enumerator } from './enumerator';
+import { Peephole } from './peephole';
 
 const debug = debugAPI('llparse:translator');
 
@@ -44,9 +46,11 @@ interface IFrontendOptions {
   readonly minTableSize: number;
 }
 
-type MatchChildren = IWrap<frontend.node.Match>[];
-type MatchResult = IWrap<frontend.node.Node> |
-                   ReadonlyArray<IWrap<frontend.node.Match>>;
+type WrappedNode = IWrap<frontend.node.Node>;
+type WrappedCode = IWrap<frontend.code.Code>;
+
+type MatchChildren = WrappedNode[];
+type MatchResult = WrappedNode | ReadonlyArray<WrappedNode>;
 
 interface ITableLookupTarget {
   readonly keys: number[];
@@ -59,11 +63,9 @@ export class Frontend {
 
   private readonly id: Identifier = new Identifier(this.prefix + '__n_');
   private readonly codeId: Identifier = new Identifier(this.prefix + '__c_');
-  private readonly map: Map<source.node.Node, IWrap<frontend.node.Node>> =
-    new Map();
+  private readonly map: Map<source.node.Node, WrappedNode> = new Map();
   private readonly spanMap: Map<source.Span, SpanField> = new Map();
-  private readonly codeCache: Map<string, IWrap<frontend.code.Code>> =
-    new Map();
+  private readonly codeCache: Map<string, WrappedCode> = new Map();
 
   constructor(private readonly prefix: string,
               private readonly implementation: IFrontendImplementation,
@@ -79,7 +81,7 @@ export class Frontend {
       'Invalid `options.maxTableElemWidth`, must be positive');
   }
 
-  public build(root: source.node.Node): IWrap<frontend.node.Node> {
+  public build(root: source.node.Node): WrappedNode {
     const spanAllocator = new SpanAllocator();
     const sourceSpans = spanAllocator.allocate(root);
 
@@ -95,10 +97,18 @@ export class Frontend {
       return span;
     });
 
-    return this.translate(root);
+    let out = this.translate(root);
+
+    const enumerator = new Enumerator();
+    const nodes = enumerator.getAllNodes(out);
+
+    const peephole = new Peephole();
+    out = peephole.optimize(out, nodes);
+
+    return out;
   }
 
-  private translate(node: source.node.Node): IWrap<frontend.node.Node> {
+  private translate(node: source.node.Node): WrappedNode {
     if (this.map.has(node)) {
       return this.map.get(node)!;
     }
@@ -163,7 +173,7 @@ export class Frontend {
       assert(result.length >= 1);
       return result[0];
     } else {
-      const single = result as IWrap<frontend.node.Node>;
+      const single = result as WrappedNode;
       assert(single.ref instanceof frontend.node.Node);
 
       // Break loops
@@ -208,7 +218,7 @@ export class Frontend {
   }
 
   private translateTrie(node: source.node.Match, trie: TrieNode,
-                        children: MatchChildren): IWrap<frontend.node.Node> {
+                        children: MatchChildren): WrappedNode {
     if (trie instanceof TrieEmpty) {
       assert(this.map.has(node));
       return this.translate(trie.node);
@@ -359,11 +369,11 @@ export class Frontend {
     return sequence;
   }
 
-  private translateCode(code: source.code.Code): IWrap<frontend.code.Code> {
+  private translateCode(code: source.code.Code): WrappedCode {
     const prefixed = this.codeId.id(code.name).name;
     const codeImpl = this.implementation.code;
 
-    let res: IWrap<frontend.code.Code>;
+    let res: WrappedCode;
     if (code instanceof source.code.IsEqual) {
       res = new codeImpl.IsEqual(
         new frontend.code.IsEqual(prefixed, code.field, code.value));

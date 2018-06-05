@@ -4,10 +4,11 @@ import { IUniqueName } from '../utils';
 import { IWrap } from '../wrap';
 import { Node } from './base';
 import { Match } from './match';
+import { Slot } from './slot';
 
 export interface ITableEdge {
   readonly keys: ReadonlyArray<number>;
-  readonly node: IWrap<Node>;
+  node: IWrap<Node>;
   readonly noAdvance: boolean;
 }
 
@@ -16,5 +17,13 @@ export class TableLookup extends Match {
 
   public addEdge(edge: ITableEdge): void {
     this.edges.push(edge);
+  }
+
+  public *getSlots() {
+    for (const edge of this.edges) {
+      yield new Slot(edge.node, (value) => edge.node = value);
+    }
+
+    yield* super.getSlots();
   }
 }

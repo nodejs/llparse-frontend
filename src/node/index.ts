@@ -7,6 +7,7 @@ export * from './match';
 export * from './pause';
 export * from './sequence';
 export * from './single';
+export * from './slot';
 export * from './span-end';
 export * from './span-start';
 export * from './table-lookup';

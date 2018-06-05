@@ -35,4 +35,27 @@ describe('llparse-frontend', () => {
       '<Sequence name=llparse__n_root_3 select="6667" otherwise-no_adv=llparse__n_error/>',
     ]);
   });
+
+  it('should do peephole optimization', () => {
+    const root = b.node('root');
+    const root1 = b.node('a');
+    const root2 = b.node('b');
+    const node1 = b.node('c');
+    const node2 = b.node('d');
+
+    root.otherwise(root1);
+    root1.otherwise(root2);
+    root2.skipTo(node1);
+    node1.otherwise(node2);
+    node2.otherwise(root);
+
+    const fRoot = f.build(root) as Node<node.Node>;
+
+    const out: string[] = [];
+    fRoot.build(out);
+
+    assert.deepStrictEqual(out, [
+      '<Empty name=llparse__n_b  otherwise=llparse__n_b/>',
+    ]);
+  });
 });
