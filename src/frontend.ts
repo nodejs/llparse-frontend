@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as debugAPI from 'debug';
-import { SpanAllocator } from 'llparse-builder';
+import { LoopChecker, SpanAllocator } from 'llparse-builder';
 
 import * as frontend from './namespace/frontend';
 import * as source from './namespace/source';
@@ -82,6 +82,11 @@ export class Frontend {
   }
 
   public compile(root: source.node.Node): WrappedNode {
+    debug('checking loops');
+    const lc = new LoopChecker();
+    lc.check(root);
+
+    debug('allocating spans');
     const spanAllocator = new SpanAllocator();
     const sourceSpans = spanAllocator.allocate(root);
 
@@ -97,11 +102,14 @@ export class Frontend {
       return span;
     });
 
+    debug('translating');
     let out = this.translate(root);
 
+    debug('enumerating');
     const enumerator = new Enumerator();
     const nodes = enumerator.getAllNodes(out);
 
+    debug('peephole optimization');
     const peephole = new Peephole();
     out = peephole.optimize(out, nodes);
 
