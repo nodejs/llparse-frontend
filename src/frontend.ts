@@ -4,9 +4,7 @@ import { LoopChecker, SpanAllocator } from 'llparse-builder';
 
 import * as frontend from './namespace/frontend';
 import * as source from './namespace/source';
-import {
-  ICodeImplementation, INodeImplementation, ITransformImplementation,
-} from './implementation';
+import { Combinator, CombinatorWrap, IImplementation } from './implementation';
 import { SpanField } from './span-field';
 import { Trie, TrieEmpty, TrieNode, TrieSequence, TrieSingle } from './trie';
 import { Identifier, IUniqueName } from './utils';
@@ -21,6 +19,8 @@ export { code, node, transform } from './namespace/frontend';
 export {
   IUniqueName,
   SpanField,
+  Combinator,
+  CombinatorWrap,
 };
 
 // Minimum number of cases of `single` node to make it eligable for
@@ -33,12 +33,6 @@ export const DEFAULT_MAX_TABLE_WIDTH = 4;
 export interface IFrontendLazyOptions {
   readonly maxTableElemWidth?: number;
   readonly minTableSize?: number;
-}
-
-export interface IFrontendImplementation {
-  readonly code: ICodeImplementation;
-  readonly node: INodeImplementation;
-  readonly transform: ITransformImplementation;
 }
 
 export interface IFrontendResult {
@@ -73,7 +67,7 @@ export class Frontend {
   private readonly codeCache: Map<string, WrappedCode> = new Map();
 
   constructor(private readonly prefix: string,
-              private readonly implementation: IFrontendImplementation,
+              private readonly implementation: IImplementation,
               options: IFrontendLazyOptions = {}) {
     this.options = {
       maxTableElemWidth: options.maxTableElemWidth === undefined ?
