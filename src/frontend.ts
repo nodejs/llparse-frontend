@@ -67,7 +67,7 @@ export class Frontend {
 
   constructor(private readonly prefix: string,
               private readonly implementation: IFrontendImplementation,
-              options: IFrontendLazyOptions=  {}) {
+              options: IFrontendLazyOptions = {}) {
     this.options = {
       maxTableElemWidth: options.maxTableElemWidth === undefined ?
         DEFAULT_MAX_TABLE_WIDTH : options.maxTableElemWidth,
