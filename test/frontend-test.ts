@@ -28,11 +28,15 @@ describe('llparse-frontend', () => {
     fRoot.build(out);
 
     assert.deepStrictEqual(out, [
-      '<Single name=llparse__n_root k97=llparse__n_root_1 k101=llparse__n_root_3 otherwise-no_adv=llparse__n_error/>',
-      '<Single name=llparse__n_root_1 k98=llparse__n_root k99=llparse__n_root_2 otherwise-no_adv=llparse__n_error/>',
-      '<Single name=llparse__n_root_2 k100=llparse__n_root otherwise-no_adv=llparse__n_error/>',
+      '<Single name=llparse__n_root k97=llparse__n_root_1 ' +
+        'k101=llparse__n_root_3 otherwise-no_adv=llparse__n_error/>',
+      '<Single name=llparse__n_root_1 k98=llparse__n_root ' +
+        'k99=llparse__n_root_2 otherwise-no_adv=llparse__n_error/>',
+      '<Single name=llparse__n_root_2 k100=llparse__n_root ' +
+        'otherwise-no_adv=llparse__n_error/>',
       '<ErrorNode name=llparse__n_error code=123 reason="hello"/>',
-      '<Sequence name=llparse__n_root_3 select="6667" otherwise-no_adv=llparse__n_error/>',
+      '<Sequence name=llparse__n_root_3 select="6667" ' +
+        'otherwise-no_adv=llparse__n_error/>',
     ]);
   });
 
