@@ -8,7 +8,7 @@ import { Container, ContainerWrap } from './container';
 import { IImplementation } from './implementation';
 import { SpanField } from './span-field';
 import { Trie, TrieEmpty, TrieNode, TrieSequence, TrieSingle } from './trie';
-import { Identifier } from './utils';
+import { Identifier, IUniqueName } from './utils';
 import { IWrap } from './wrap';
 import { Enumerator } from './enumerator';
 import { Peephole } from './peephole';
@@ -19,6 +19,7 @@ export { code, node, transform } from './namespace/frontend';
 
 export {
   Identifier,
+  IUniqueName,
   SpanField,
   Container,
   ContainerWrap,
