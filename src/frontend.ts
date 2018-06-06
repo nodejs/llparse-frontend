@@ -8,7 +8,7 @@ import { Container, ContainerWrap } from './container';
 import { IImplementation } from './implementation';
 import { SpanField } from './span-field';
 import { Trie, TrieEmpty, TrieNode, TrieSequence, TrieSingle } from './trie';
-import { Identifier, IUniqueName } from './utils';
+import { Identifier } from './utils';
 import { IWrap } from './wrap';
 import { Enumerator } from './enumerator';
 import { Peephole } from './peephole';
@@ -18,7 +18,7 @@ const debug = debugAPI('llparse:translator');
 export { code, node, transform } from './namespace/frontend';
 
 export {
-  IUniqueName,
+  Identifier,
   SpanField,
   Container,
   ContainerWrap,
@@ -121,7 +121,7 @@ export class Frontend {
       return this.map.get(node)!;
     }
 
-    const id = (): IUniqueName => this.id.id(node.name);
+    const id = () => this.id.id(node.name);
 
     const nodeImpl = this.implementation.node;
 

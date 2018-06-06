@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Frontend for LLParse compiler",
   "main": "lib/frontend.js",
+  "types": "lib/frontend.d.ts",
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf lib",
