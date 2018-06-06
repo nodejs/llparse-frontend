@@ -2,7 +2,7 @@ import { IUniqueName } from '../utils';
 import { IWrap } from '../wrap';
 import { Slot } from './slot';
 
-export interface IReadonlyEdge {
+export interface IReadonlyOtherwiseEdge {
   readonly node: IWrap<Node>;
   readonly noAdvance: boolean;
 }
@@ -23,7 +23,7 @@ export abstract class Node {
     this.privOtherwise = { node, noAdvance };
   }
 
-  public get otherwise(): IReadonlyEdge | undefined {
+  public get otherwise(): IReadonlyOtherwiseEdge | undefined {
     return this.privOtherwise;
   }
 
