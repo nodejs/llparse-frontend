@@ -2,7 +2,7 @@ import * as assert from 'assert';
 
 import { IWrap } from '../wrap';
 
-export class CombinatorWrap<T> {
+export class ContainerWrap<T> {
   protected readonly map: Map<string, IWrap<T>> = new Map();
 
   constructor(public readonly ref: T) {

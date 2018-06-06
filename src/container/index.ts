@@ -1,13 +1,15 @@
 import * as assert from 'assert';
 
+import { ICodeImplementation } from '../implementation/code';
+import { IImplementation } from '../implementation/full';
+import { INodeImplementation } from '../implementation/node';
+import { ITransformImplementation } from '../implementation/transform';
 import { IWrap } from '../wrap';
-import { ICodeImplementation } from './code';
-import { CombinatorWrap } from './combinator-wrap';
-import { IImplementation } from './full';
-import { INodeImplementation } from './node';
-import { ITransformImplementation } from './transform';
+import { ContainerWrap } from './wrap';
 
-export class Combinator {
+export { ContainerWrap };
+
+export class Container {
   private readonly map: Map<string, IImplementation> = new Map();
 
   public add(key: string, impl: IImplementation): void {
@@ -61,13 +63,13 @@ export class Combinator {
   }
 
   private combine<T>(gather: (impl: IImplementation) => new(n: T) => IWrap<T>)
-    : new(n: T) => CombinatorWrap<T> {
+    : new(n: T) => ContainerWrap<T> {
     const wraps: Map<string, new(n: T) => IWrap<T>> = new Map();
     for (const [ key, impl ] of this.map) {
       wraps.set(key, gather(impl));
     }
 
-    return class CombinatorWrapImpl extends CombinatorWrap<T> {
+    return class ContainerWrapSingle extends ContainerWrap<T> {
       constructor(ref: T) {
         super(ref);
 

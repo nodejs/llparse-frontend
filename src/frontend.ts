@@ -4,7 +4,8 @@ import { LoopChecker, SpanAllocator } from 'llparse-builder';
 
 import * as frontend from './namespace/frontend';
 import * as source from './namespace/source';
-import { Combinator, CombinatorWrap, IImplementation } from './implementation';
+import { Container, ContainerWrap } from './container';
+import { IImplementation } from './implementation';
 import { SpanField } from './span-field';
 import { Trie, TrieEmpty, TrieNode, TrieSequence, TrieSingle } from './trie';
 import { Identifier, IUniqueName } from './utils';
@@ -19,8 +20,8 @@ export { code, node, transform } from './namespace/frontend';
 export {
   IUniqueName,
   SpanField,
-  Combinator,
-  CombinatorWrap,
+  Container,
+  ContainerWrap,
 };
 
 // Minimum number of cases of `single` node to make it eligable for

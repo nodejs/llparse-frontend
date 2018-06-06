@@ -1,4 +1,4 @@
-import { CombinatorWrap, node } from '../../../../src/frontend';
+import { ContainerWrap, node } from '../../../../src/frontend';
 
 export abstract class Node<T extends node.Node> {
   private built: boolean = false;
@@ -15,7 +15,7 @@ export abstract class Node<T extends node.Node> {
     this.doBuild(out);
 
     if (this.ref.otherwise !== undefined) {
-      const cwrap = this.ref.otherwise.node as CombinatorWrap<T>;
+      const cwrap = this.ref.otherwise.node as ContainerWrap<T>;
       const otherwise = cwrap.get<Node<T>>('a');
       otherwise.build(out);
     }

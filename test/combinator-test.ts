@@ -2,18 +2,18 @@ import * as assert from 'assert';
 
 import { Builder } from 'llparse-builder';
 
-import { Combinator, CombinatorWrap, Frontend, node } from '../src/frontend';
+import { Container, ContainerWrap, Frontend, node } from '../src/frontend';
 import implementation from './fixtures/a-implementation';
 import { Node } from './fixtures/implementation/node/base';
 
-describe('llparse-frontend/Combinator', () => {
+describe('llparse-frontend/Container', () => {
   let b: Builder;
   beforeEach(() => {
     b = new Builder();
   });
 
   it('should translate nodes to implementation', () => {
-    const comb = new Combinator();
+    const comb = new Container();
     comb.add('a', implementation);
     comb.add('b', implementation);
 
@@ -26,7 +26,7 @@ describe('llparse-frontend/Combinator', () => {
     root.match('efg', root);
     root.otherwise(b.error(123, 'hello'));
 
-    const fRoot = f.compile(root).root as CombinatorWrap<node.Node>;
+    const fRoot = f.compile(root).root as ContainerWrap<node.Node>;
 
     const out: string[] = [];
     (fRoot.get('a') as Node<node.Node>).build(out);

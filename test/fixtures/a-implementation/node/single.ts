@@ -1,4 +1,4 @@
-import { CombinatorWrap, node } from '../../../../src/frontend';
+import { ContainerWrap, node } from '../../../../src/frontend';
 import { Node } from './base';
 
 export class Single extends Node<node.Single> {
@@ -11,7 +11,7 @@ export class Single extends Node<node.Single> {
     out.push(this.format(edges.join(' ')));
 
     for (const edge of this.ref.edges) {
-      const edgeNode = edge.node as CombinatorWrap<node.Node>;
+      const edgeNode = edge.node as ContainerWrap<node.Node>;
       edgeNode.get<Node<node.Node>>('a').build(out);
     }
   }
