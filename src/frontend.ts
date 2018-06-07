@@ -1,9 +1,8 @@
 import * as assert from 'assert';
 import * as debugAPI from 'debug';
-import { LoopChecker, SpanAllocator } from 'llparse-builder';
+import * as source from 'llparse-builder';
 
 import * as frontend from './namespace/frontend';
-import * as source from './namespace/source';
 import { Container, ContainerWrap } from './container';
 import { IImplementation } from './implementation';
 import { SpanField } from './span-field';
@@ -18,6 +17,7 @@ const debug = debugAPI('llparse:translator');
 export { code, node, transform } from './namespace/frontend';
 
 export {
+  source,
   Identifier,
   IUniqueName,
   IWrap,
@@ -88,11 +88,11 @@ export class Frontend {
   public compile(root: source.node.Node,
                  properties: ReadonlyArray<source.Property>): IFrontendResult {
     debug('checking loops');
-    const lc = new LoopChecker();
+    const lc = new source.LoopChecker();
     lc.check(root);
 
     debug('allocating spans');
-    const spanAllocator = new SpanAllocator();
+    const spanAllocator = new source.SpanAllocator();
     const sourceSpans = spanAllocator.allocate(root);
 
     const spans = sourceSpans.concurrency.map((concurrent, index) => {
@@ -155,7 +155,7 @@ export class Frontend {
     } else if (node instanceof source.node.Match) {
       result = this.translateMatch(node);
     } else {
-      throw new Error(`Unknown node type for "${node.name}"`);
+      throw new Error(`Unknown node type for "${node.name}" ${node.constructor.toString()}`);
     }
 
     // Initialize result

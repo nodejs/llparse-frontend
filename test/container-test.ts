@@ -26,7 +26,7 @@ describe('llparse-frontend/Container', () => {
     root.match('efg', root);
     root.otherwise(b.error(123, 'hello'));
 
-    const fRoot = f.compile(root).root as ContainerWrap<node.Node>;
+    const fRoot = f.compile(root, []).root as ContainerWrap<node.Node>;
 
     const out: string[] = [];
     (fRoot.get('a') as Node<node.Node>).build(out);
