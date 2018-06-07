@@ -1,1 +1,1 @@
-export { node, code, transform, Span } from 'llparse-builder';
+export { node, code, transform, Property, Span } from 'llparse-builder';

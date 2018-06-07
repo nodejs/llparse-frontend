@@ -20,6 +20,7 @@ export { code, node, transform } from './namespace/frontend';
 export {
   Identifier,
   IUniqueName,
+  IWrap,
   SpanField,
   Container,
   ContainerWrap,
@@ -38,6 +39,8 @@ export interface IFrontendLazyOptions {
 }
 
 export interface IFrontendResult {
+  readonly prefix: string;
+  readonly properties: ReadonlyArray<source.Property>;
   readonly root: IWrap<frontend.node.Node>;
   readonly spans: ReadonlyArray<SpanField>;
 }
@@ -82,7 +85,8 @@ export class Frontend {
       'Invalid `options.maxTableElemWidth`, must be positive');
   }
 
-  public compile(root: source.node.Node): IFrontendResult {
+  public compile(root: source.node.Node,
+                 properties: ReadonlyArray<source.Property>): IFrontendResult {
     debug('checking loops');
     const lc = new LoopChecker();
     lc.check(root);
@@ -114,7 +118,7 @@ export class Frontend {
     const peephole = new Peephole();
     out = peephole.optimize(out, nodes);
 
-    return { spans, root: out };
+    return { prefix: this.prefix, properties, spans, root: out };
   }
 
   private translate(node: source.node.Node): WrappedNode {
