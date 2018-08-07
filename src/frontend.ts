@@ -150,6 +150,8 @@ export class Frontend {
         new frontend.node.SpanEnd(id(), this.spanMap.get(node.span)!,
           this.translateSpanCode(node.span.callback)));
     } else if (node instanceof source.node.Invoke) {
+      assert(node.code.signature === 'match' || node.code.signature === 'value',
+          'Passing `span` callback to `invoke` is not allowed');
       result = new nodeImpl.Invoke(
         new frontend.node.Invoke(id(), this.translateCode(node.code)));
     } else if (node instanceof source.node.Match) {
