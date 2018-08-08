@@ -396,6 +396,7 @@ export class Frontend {
       res = new codeImpl.Load(
         new frontend.code.Load(prefixed, code.field));
     } else if (code instanceof source.code.MulAdd) {
+      // TODO(indutny): verify property type
       const m = new frontend.code.MulAdd(prefixed, code.field, {
         base: code.options.base,
         max: code.options.max,
