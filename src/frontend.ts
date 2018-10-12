@@ -70,6 +70,7 @@ export class Frontend {
   private readonly map: Map<source.node.Node, WrappedNode> = new Map();
   private readonly spanMap: Map<source.Span, SpanField> = new Map();
   private readonly codeCache: Map<string, WrappedCode> = new Map();
+  private readonly resumptionTargets: Set<WrappedNode> = new Set();
 
   constructor(private readonly prefix: string,
               private readonly implementation: IImplementation,
@@ -112,13 +113,26 @@ export class Frontend {
 
     debug('enumerating');
     const enumerator = new Enumerator();
-    const nodes = enumerator.getAllNodes(out);
+    let nodes = enumerator.getAllNodes(out);
 
     debug('peephole optimization');
     const peephole = new Peephole();
     out = peephole.optimize(out, nodes);
 
+    debug('re-enumerating');
+    nodes = enumerator.getAllNodes(out);
+
+    debug('registering resumption targets');
+    this.resumptionTargets.add(out);
+    for (const node of nodes) {
+      this.registerNode(node);
+    }
+
     return { prefix: this.prefix, properties, spans, root: out };
+  }
+
+  public getResumptionTargets(): ReadonlySet<WrappedNode> {
+    return this.resumptionTargets;
   }
 
   private translate(node: source.node.Node): WrappedNode {
@@ -188,7 +202,7 @@ export class Frontend {
       assert(result.length >= 1);
       return result[0];
     } else {
-      const single = result as WrappedNode;
+      const single: WrappedNode = result as WrappedNode;
       assert(single.ref instanceof frontend.node.Node);
 
       // Break loops
@@ -212,6 +226,25 @@ export class Frontend {
       }
 
       return single;
+    }
+  }
+
+  private registerNode(node: any): void {
+    const nodeImpl = this.implementation.node;
+
+    // Nodes with prologue check (start_pos != end_pos)
+    if (node instanceof nodeImpl.Consume ||
+        node instanceof nodeImpl.Empty ||
+        node instanceof nodeImpl.Sequence ||
+        node instanceof nodeImpl.Single ||
+        node instanceof nodeImpl.SpanStart ||
+        node instanceof nodeImpl.TableLookup) {
+      this.resumptionTargets.add(node);
+
+    // Nodes that can interrupt the execution to be resumed at different node
+    } else if (node instanceof nodeImpl.Pause ||
+               node instanceof nodeImpl.SpanEnd) {
+      this.resumptionTargets.add(node.ref.otherwise!.node);
     }
   }
 
