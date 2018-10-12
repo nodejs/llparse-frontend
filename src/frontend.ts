@@ -33,6 +33,9 @@ export const DEFAULT_MIN_TABLE_SIZE = 32;
 // Maximum width of entry in a table for a `TableLookup` optimization
 export const DEFAULT_MAX_TABLE_WIDTH = 4;
 
+type WrappedNode = IWrap<frontend.node.Node>;
+type WrappedCode = IWrap<frontend.code.Code>;
+
 export interface IFrontendLazyOptions {
   readonly maxTableElemWidth?: number;
   readonly minTableSize?: number;
@@ -43,15 +46,13 @@ export interface IFrontendResult {
   readonly properties: ReadonlyArray<source.Property>;
   readonly root: IWrap<frontend.node.Node>;
   readonly spans: ReadonlyArray<SpanField>;
+  readonly resumptionTargets: ReadonlySet<WrappedNode>;
 }
 
 interface IFrontendOptions {
   readonly maxTableElemWidth: number;
   readonly minTableSize: number;
 }
-
-type WrappedNode = IWrap<frontend.node.Node>;
-type WrappedCode = IWrap<frontend.code.Code>;
 
 type MatchChildren = WrappedNode[];
 type MatchResult = WrappedNode | ReadonlyArray<WrappedNode>;
@@ -128,9 +129,16 @@ export class Frontend {
       this.registerNode(node);
     }
 
-    return { prefix: this.prefix, properties, spans, root: out };
+    return {
+      prefix: this.prefix,
+      properties,
+      resumptionTargets: this.resumptionTargets,
+      root: out,
+      spans,
+    };
   }
 
+  // TODO(indutny): remove this in the next major release
   public getResumptionTargets(): ReadonlySet<WrappedNode> {
     return this.resumptionTargets;
   }
