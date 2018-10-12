@@ -1,6 +1,6 @@
 {
   "name": "llparse-frontend",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Frontend for LLParse compiler",
   "main": "lib/frontend.js",
   "types": "lib/frontend.d.ts",
