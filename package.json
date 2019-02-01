@@ -28,16 +28,16 @@
   },
   "homepage": "https://github.com/indutny/llparse-frontend#readme",
   "dependencies": {
-    "debug": "^3.1.0",
-    "llparse-builder": "^1.3.0"
+    "debug": "^3.2.6",
+    "llparse-builder": "^1.3.1"
   },
   "devDependencies": {
     "@types/debug": "0.0.30",
     "@types/mocha": "^5.2.5",
-    "@types/node": "^10.5.7",
+    "@types/node": "^10.12.0",
     "mocha": "^5.2.0",
-    "ts-node": "^7.0.0",
+    "ts-node": "^7.0.1",
     "tslint": "^5.11.0",
-    "typescript": "^3.0.1"
+    "typescript": "^3.1.3"
   }
 }

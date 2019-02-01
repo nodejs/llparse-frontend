@@ -14,6 +14,8 @@ function checkNodes(f: Frontend, root: source.node.Node,
   fRoot.build(out);
 
   assert.deepStrictEqual(out, expected);
+
+  return fRoot;
 }
 
 function checkResumptionTargets(f: Frontend, expected: ReadonlyArray<string>) {
@@ -125,5 +127,18 @@ describe('llparse-frontend', () => {
       'llparse__n_end_2',
       'llparse__n_pause_1',
     ]);
+  });
+
+  it('should translate Span code into Span', () => {
+    const root = b.invoke(b.code.span('my_span'));
+    root.otherwise(b.error(1, 'okay'));
+
+    const fRoot = checkNodes(f, root, [
+      '<Invoke name=llparse__n_invoke_my_span  ' +
+        'otherwise-no_adv=llparse__n_error/>',
+      '<ErrorNode name=llparse__n_error code=1 reason="okay"/>',
+    ]);
+
+    assert((fRoot.ref as any).code instanceof implementation.code.Span);
   });
 });
