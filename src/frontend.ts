@@ -163,6 +163,8 @@ export class Frontend {
     } else if (node instanceof source.node.Consume) {
       result = new nodeImpl.Consume(
         new frontend.node.Consume(id(), node.field));
+    } else if (node instanceof source.node.Int) {
+      result = this.translateInt(node);
     } else if (node instanceof source.node.SpanStart) {
       result = new nodeImpl.SpanStart(
         new frontend.node.SpanStart(id(), this.spanMap.get(node.span)!,
@@ -184,27 +186,37 @@ export class Frontend {
 
     // Initialize result
     const otherwise = node.getOtherwiseEdge();
-
     if (Array.isArray(result)) {
-      assert(node instanceof source.node.Match);
-      const match = node as source.node.Match;
+      assert(node instanceof source.node.Match || node instanceof source.node.Int);
 
-      // TODO(indutny): move this to llparse-builder?
-      assert.notStrictEqual(otherwise, undefined,
-        `Node "${node.name}" has no \`.otherwise()\``);
+      if (node instanceof source.node.Match) {
+        // TODO(indutny): move this to llparse-builder?
+        assert.notStrictEqual(otherwise, undefined,
+          `Node "${node.name}" has no \`.otherwise()\``);
 
-      // Assign otherwise to every node of Trie
-      if (otherwise !== undefined) {
-        for (const child of result) {
-          child.ref.setOtherwise(this.translate(otherwise.node),
-            otherwise.noAdvance);
+        // Assign otherwise to every node of Trie
+        if (otherwise !== undefined) {
+          for (const child of result) {
+            child.ref.setOtherwise(this.translate(otherwise.node),
+              otherwise.noAdvance);
+          }
         }
-      }
 
-      // Assign transform to every node of Trie
-      const transform = this.translateTransform(match.getTransform());
-      for (const child of result) {
-        child.ref.setTransform(transform);
+        // Assign transform to every node of Trie
+        const transform = this.translateTransform(node.getTransform());
+        for (const child of result) {
+          child.ref.setTransform(transform);
+        }
+      } else if (node instanceof source.node.Int) {
+        // TODO(indutny): move this to llparse-builder?
+        assert.notStrictEqual(otherwise, undefined,
+          `Node "${node.name}" has no \`.otherwise()\``);
+
+        // Assign otherwise to last node of int expansion
+        if (otherwise !== undefined) {
+          result[result.length - 1].ref.setOtherwise(this.translate(otherwise.node),
+            otherwise.noAdvance)
+        }
       }
 
       assert(result.length >= 1);
@@ -254,6 +266,31 @@ export class Frontend {
                node instanceof nodeImpl.SpanEnd) {
       this.resumptionTargets.add(node.ref.otherwise!.node);
     }
+  }
+
+  private translateInt(node: source.node.Int) : ReadonlyArray<IWrap<frontend.node.Node>> {
+    const { name, field, bytes, signed, littleEndian } = node;
+
+    let result = [
+      new this.implementation.node.Int(
+        new frontend.node.Int(this.id.id(name), field, bytes, signed, littleEndian, 0)
+      )
+    ];
+
+    // Break loops
+    this.map.set(node, result[0]);
+
+    let next = result[0];
+    for (let offset = 1; offset < node.bytes; offset++) {
+      result[offset] = new this.implementation.node.Int(
+        new frontend.node.Int(this.id.id(name + '_byte' + (offset + 1)), field, bytes, signed, littleEndian, offset)
+      );
+
+      next.ref.setOtherwise(result[offset], false);
+      next = result[offset];
+    }
+
+    return result;
   }
 
   private translateMatch(node: source.node.Match): MatchResult {

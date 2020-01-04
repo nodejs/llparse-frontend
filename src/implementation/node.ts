@@ -5,6 +5,7 @@ export interface INodeImplementation {
   readonly Consume: new(n: node.Consume) => IWrap<node.Consume>;
   readonly Empty: new(n: node.Empty) => IWrap<node.Empty>;
   readonly Error: new(n: node.Error) => IWrap<node.Error>;
+  readonly Int: new(n: node.Int) => IWrap<node.Int>;
   readonly Invoke: new(n: node.Invoke) => IWrap<node.Invoke>;
   readonly Pause: new(n: node.Pause) => IWrap<node.Pause>;
   readonly Sequence: new(n: node.Sequence) => IWrap<node.Sequence>;

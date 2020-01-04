@@ -45,6 +45,7 @@ export class Container {
       Consume: this.combine((impl) => impl.node.Consume),
       Empty: this.combine((impl) => impl.node.Empty),
       Error: this.combine((impl) => impl.node.Error),
+      Int: this.combine((impl) => impl.node.Int),
       Invoke: this.combine((impl) => impl.node.Invoke),
       Pause: this.combine((impl) => impl.node.Pause),
       Sequence: this.combine((impl) => impl.node.Sequence),

@@ -29,7 +29,7 @@
   "homepage": "https://github.com/indutny/llparse-frontend#readme",
   "dependencies": {
     "debug": "^3.2.6",
-    "llparse-builder": "^1.3.2"
+    "llparse-builder": "git+https://github.com/arthurschreiber/llparse-builder.git#arthur/binary-parsing"
   },
   "devDependencies": {
     "@types/debug": "0.0.30",
