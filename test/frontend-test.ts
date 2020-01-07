@@ -63,6 +63,38 @@ describe('llparse-frontend', () => {
     ]);
   });
 
+  it('should expand int nodes based on their number of required bytes', () => {
+    b.property('i8', 'byte');
+
+    const byte = b.intLE('byte', 1);
+    byte.otherwise(b.error(123, 'hello'));
+
+    checkNodes(f, byte, [
+      '<Int name=llparse__n_byte_int_8 byteOffset=0 otherwise-no_adv=llparse__n_error/>',
+      '<ErrorNode name=llparse__n_error code=123 reason="hello"/>'
+    ]);
+
+    const short = b.intLE('short', 2);
+    short.otherwise(b.error(123, 'hello'));
+
+    checkNodes(f, short, [
+      '<Int name=llparse__n_short_int_16_le byteOffset=0 otherwise=llparse__n_short_int_16_le_byte2/>',
+      '<Int name=llparse__n_short_int_16_le_byte2 byteOffset=1 otherwise-no_adv=llparse__n_error_1/>',
+      '<ErrorNode name=llparse__n_error_1 code=123 reason="hello"/>'
+    ]);
+
+    const word = b.intLE('word', 4);
+    word.otherwise(b.error(123, 'hello'));
+
+    checkNodes(f, word, [
+      '<Int name=llparse__n_word_int_32_le byteOffset=0 otherwise=llparse__n_word_int_32_le_byte2/>',
+      '<Int name=llparse__n_word_int_32_le_byte2 byteOffset=1 otherwise=llparse__n_word_int_32_le_byte3/>',
+      '<Int name=llparse__n_word_int_32_le_byte3 byteOffset=2 otherwise=llparse__n_word_int_32_le_byte4/>',
+      '<Int name=llparse__n_word_int_32_le_byte4 byteOffset=3 otherwise-no_adv=llparse__n_error_2/>',
+      '<ErrorNode name=llparse__n_error_2 code=123 reason="hello"/>'
+    ]);
+  });
+
   it('should do peephole optimization', () => {
     const root = b.node('root');
     const root1 = b.node('a');
