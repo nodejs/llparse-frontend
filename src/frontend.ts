@@ -271,20 +271,17 @@ export class Frontend {
   private translateInt(node: source.node.Int) : ReadonlyArray<IWrap<frontend.node.Node>> {
     const { name, field, bytes, signed, littleEndian } = node;
 
-    let result = [
-      new this.implementation.node.Int(
-        new frontend.node.Int(this.id.id(name), field, bytes, signed, littleEndian, 0)
-      )
-    ];
+    const inner = new frontend.node.Int(this.id.id(name), field, bytes, signed, littleEndian, 0);
+    let result = [ new this.implementation.node.Int(inner) ];
 
     // Break loops
     this.map.set(node, result[0]);
 
     let next = result[0];
     for (let offset = 1; offset < node.bytes; offset++) {
-      result[offset] = new this.implementation.node.Int(
-        new frontend.node.Int(this.id.id(name + '_byte' + (offset + 1)), field, bytes, signed, littleEndian, offset)
-      );
+      const uniqueName = this.id.id(`${name}_byte${offset + 1}`);
+      const inner = new frontend.node.Int(uniqueName, field, bytes, signed, littleEndian, offset);
+      result[offset] = new this.implementation.node.Int(inner);
 
       next.ref.setOtherwise(result[offset], false);
       next = result[offset];
