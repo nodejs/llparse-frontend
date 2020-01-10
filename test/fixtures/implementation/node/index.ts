@@ -1,6 +1,7 @@
 import { Consume } from './consume';
 import { Empty } from './empty';
 import { Error } from './error';
+import { Int } from './int';
 import { Invoke } from './invoke';
 import { Pause } from './pause';
 import { Sequence } from './sequence';
@@ -10,6 +11,6 @@ import { SpanStart } from './span-start';
 import { TableLookup } from './table-lookup';
 
 export default {
-  Consume, Empty, Error, Invoke, Pause, Sequence, Single, SpanEnd,
+  Consume, Empty, Error, Int, Invoke, Pause, Sequence, Single, SpanEnd,
   SpanStart, TableLookup,
 };
