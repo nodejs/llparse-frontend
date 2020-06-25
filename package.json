@@ -35,7 +35,7 @@
     "@types/debug": "0.0.30",
     "@types/mocha": "^5.2.7",
     "@types/node": "^10.17.26",
-    "mocha": "^5.2.0",
+    "mocha": "^8.0.1",
     "ts-node": "^7.0.1",
     "tslint": "^5.20.1",
     "typescript": "^3.9.5"
