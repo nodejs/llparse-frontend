@@ -97,11 +97,11 @@ export class Trie {
         `Duplicate entries in "${this.name}" at [ ${path.join(', ')} ]`);
     }
 
-    let otherwise: api.Node | undefined;
+    let otherwise: TrieEmpty | undefined;
     const keys: Map<number, IEdge[]> = new Map();
     for (const edge of edges) {
       if (edge.key.length === 0) {
-        otherwise = edge.node;
+        otherwise = new TrieEmpty(edge.node, edge.value);
         continue;
       }
       const key = edge.key[0];

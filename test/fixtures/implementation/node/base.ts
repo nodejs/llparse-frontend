@@ -26,6 +26,9 @@ export abstract class Node<T extends node.Node> {
       otherwise = ' otherwise' +
         `${this.ref.otherwise.noAdvance ? '-no_adv' : ''}=` +
         `${otherwiseRef.id.name}`;
+      if (this.ref.otherwise.value !== undefined) {
+        otherwise += `:${this.ref.otherwise.value}`;
+      }
     }
 
     return `<${this.constructor.name} name=${this.ref.id.name} ` +

@@ -103,8 +103,8 @@ describe('llparse-frontend', () => {
     end.otherwise(b.error(2, 'ohai'));
 
     checkNodes(f, root, [
-      '<Single name=llparse__n_root k97=llparse__n_invoke_store_counter ' +
-          'k98=llparse__n_invoke_store_counter ' +
+      '<Single name=llparse__n_root k97=llparse__n_invoke_store_counter:1 ' +
+          'k98=llparse__n_invoke_store_counter:2 ' +
           'otherwise-no_adv=llparse__n_error_1/>',
       '<Invoke name=llparse__n_invoke_store_counter  ' +
           'otherwise-no_adv=llparse__n_end/>',
@@ -152,6 +152,30 @@ describe('llparse-frontend', () => {
     checkNodes(f, root, [
       '<Sequence name=llparse__n_root select="6162" edge="llparse__n_root_1" otherwise-no_adv=llparse__n_error/>',
       '<Single name=llparse__n_root_1 k99=llparse__n_root otherwise-no_adv=llparse__n_root/>',
+      '<ErrorNode name=llparse__n_error code=123 reason="hello"/>',
+    ]);
+
+    checkResumptionTargets(f, [
+      'llparse__n_root',
+      'llparse__n_root_1',
+    ]);
+  });
+
+  it('should translate overlapping matches with values', () => {
+    const root = b.node('root');
+    const store = b.invoke(b.code.store('counter'));
+
+    root.select({
+      ab: 1,
+      abc: 2,
+    }, store);
+    store.otherwise(root);
+    root.otherwise(b.error(123, 'hello'));
+
+    checkNodes(f, root, [
+      '<Sequence name=llparse__n_root select="6162" edge="llparse__n_root_1" otherwise-no_adv=llparse__n_error/>',
+      '<Single name=llparse__n_root_1 k99=llparse__n_invoke_store_counter:2 otherwise-no_adv=llparse__n_invoke_store_counter:1/>',
+      '<Invoke name=llparse__n_invoke_store_counter  otherwise-no_adv=llparse__n_root/>',
       '<ErrorNode name=llparse__n_error code=123 reason="hello"/>',
     ]);
 

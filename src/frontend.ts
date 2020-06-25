@@ -317,8 +317,12 @@ export class Frontend {
       });
     }
 
-    if (trie.otherwise) {
-      single.ref.setOtherwise(this.translate(trie.otherwise), true);
+    const otherwise = trie.otherwise;
+    if (otherwise) {
+      single.ref.setOtherwise(
+        this.translateTrie(node, otherwise, children),
+        true,
+        otherwise.value);
     }
 
     return single;

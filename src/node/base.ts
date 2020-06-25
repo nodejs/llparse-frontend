@@ -5,11 +5,13 @@ import { Slot } from './slot';
 export interface IReadonlyOtherwiseEdge {
   readonly node: IWrap<Node>;
   readonly noAdvance: boolean;
+  readonly value: number | undefined;
 }
 
 interface IOtherwiseEdge {
   node: IWrap<Node>;
   readonly noAdvance: boolean;
+  readonly value: number | undefined;
 }
 
 export abstract class Node {
@@ -19,8 +21,8 @@ export abstract class Node {
   constructor(public readonly id: IUniqueName) {
   }
 
-  public setOtherwise(node: IWrap<Node>, noAdvance: boolean) {
-    this.privOtherwise = { node, noAdvance };
+  public setOtherwise(node: IWrap<Node>, noAdvance: boolean, value?: number) {
+    this.privOtherwise = { node, noAdvance, value };
   }
 
   public get otherwise(): IReadonlyOtherwiseEdge | undefined {
