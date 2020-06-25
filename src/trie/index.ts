@@ -45,18 +45,14 @@ export class Trie {
     const first = edges[0].key;
     const last = edges[edges.length - 1].key;
 
-    let common = 0;
-    const min = Math.min(first.length, last.length);
-
     // Leaf
-    if (min === 0) {
-      assert.strictEqual(edges.length, 1,
-        `Duplicate entries in "${this.name}" at [ ${path.join(', ')} ]`);
+    if (edges.length === 1 && edges[0].key.length === 0) {
       return new TrieEmpty(edges[0].node, edges[0].value);
     }
 
     // Find the longest common sub-string
-    for (; common < min; common++) {
+    let common = 0;
+    for (; common < first.length; common++) {
       if (first[common] !== last[common]) {
         break;
       }
@@ -94,8 +90,20 @@ export class Trie {
   }
 
   private single(edges: EdgeArray, path: Path): TrieNode {
+    // Check for duplicates
+    if (edges[0].key.length === 0) {
+      assert(path.length !== 0, `Empty root entry at "${this.name}"`);
+      assert(edges.length === 1 || edges[1].key.length !== 0,
+        `Duplicate entries in "${this.name}" at [ ${path.join(', ')} ]`);
+    }
+
+    let otherwise: api.Node | undefined;
     const keys: Map<number, IEdge[]> = new Map();
     for (const edge of edges) {
+      if (edge.key.length === 0) {
+        otherwise = edge.node;
+        continue;
+      }
       const key = edge.key[0];
 
       if (keys.has(key)) {
@@ -123,6 +131,6 @@ export class Trie {
         node: this.level(sliced, subpath),
       });
     });
-    return new TrieSingle(children);
+    return new TrieSingle(children, otherwise);
   }
 }

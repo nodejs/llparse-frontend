@@ -196,8 +196,10 @@ export class Frontend {
       // Assign otherwise to every node of Trie
       if (otherwise !== undefined) {
         for (const child of result) {
-          child.ref.setOtherwise(this.translate(otherwise.node),
-            otherwise.noAdvance);
+          if (!child.ref.otherwise) {
+            child.ref.setOtherwise(this.translate(otherwise.node),
+              otherwise.noAdvance);
+          }
         }
       }
 
@@ -314,6 +316,11 @@ export class Frontend {
         value: child.node instanceof TrieEmpty ? child.node.value : undefined,
       });
     }
+
+    if (trie.otherwise) {
+      single.ref.setOtherwise(this.translate(trie.otherwise), true);
+    }
+
     return single;
   }
 

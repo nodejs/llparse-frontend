@@ -141,4 +141,23 @@ describe('llparse-frontend', () => {
 
     assert((fRoot.ref as any).code instanceof implementation.code.Span);
   });
+
+  it('should translate overlapping matches', () => {
+    const root = b.node('root');
+
+    root.match('ab', root);
+    root.match('abc', root);
+    root.otherwise(b.error(123, 'hello'));
+
+    checkNodes(f, root, [
+      '<Sequence name=llparse__n_root select="6162" edge="llparse__n_root_1" otherwise-no_adv=llparse__n_error/>',
+      '<Single name=llparse__n_root_1 k99=llparse__n_root otherwise-no_adv=llparse__n_root/>',
+      '<ErrorNode name=llparse__n_error code=123 reason="hello"/>',
+    ]);
+
+    checkResumptionTargets(f, [
+      'llparse__n_root',
+      'llparse__n_root_1',
+    ]);
+  });
 });

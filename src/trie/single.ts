@@ -8,7 +8,8 @@ export interface ITrieSingleChild {
 }
 
 export class TrieSingle extends TrieNode {
-  constructor(public readonly children: ReadonlyArray<ITrieSingleChild>) {
+  constructor(public readonly children: ReadonlyArray<ITrieSingleChild>,
+              public readonly otherwise: api.Node | undefined) {
     super();
   }
 }
