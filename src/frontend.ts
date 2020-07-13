@@ -497,6 +497,9 @@ export class Frontend {
     const transformImpl = this.implementation.transform;
     if (transform === undefined) {
       return new transformImpl.ID(new frontend.transform.ID());
+    } else if (transform.name === 'to_lower') {
+      return new transformImpl.ToLower(
+        new frontend.transform.ToLower());
     } else if (transform.name === 'to_lower_unsafe') {
       return new transformImpl.ToLowerUnsafe(
         new frontend.transform.ToLowerUnsafe());

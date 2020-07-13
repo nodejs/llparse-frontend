@@ -58,6 +58,7 @@ export class Container {
   public buildTransform(): ITransformImplementation {
     return {
       ID: this.combine((impl) => impl.transform.ID),
+      ToLower: this.combine((impl) => impl.transform.ToLower),
       ToLowerUnsafe: this.combine((impl) => impl.transform.ToLowerUnsafe),
     };
   }
