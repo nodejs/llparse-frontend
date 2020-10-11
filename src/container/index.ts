@@ -27,6 +27,7 @@ export class Container {
 
   public buildCode(): ICodeImplementation {
     return {
+      And: this.combine((impl) => impl.code.And),
       IsEqual: this.combine((impl) => impl.code.IsEqual),
       Load: this.combine((impl) => impl.code.Load),
       Match: this.combine((impl) => impl.code.Match),

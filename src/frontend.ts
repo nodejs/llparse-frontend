@@ -455,6 +455,9 @@ export class Frontend {
         signed: code.options.signed === undefined ? true : code.options.signed,
       });
       res = new codeImpl.MulAdd(m);
+    } else if (code instanceof source.code.And) {
+      res = new codeImpl.And(
+        new frontend.code.Or(prefixed, code.field, code.value));
     } else if (code instanceof source.code.Or) {
       res = new codeImpl.Or(
         new frontend.code.Or(prefixed, code.field, code.value));

@@ -29,15 +29,15 @@
   "homepage": "https://github.com/indutny/llparse-frontend#readme",
   "dependencies": {
     "debug": "^3.2.6",
-    "llparse-builder": "^1.4.0"
+    "llparse-builder": "^1.5.2"
   },
   "devDependencies": {
-    "@types/debug": "0.0.30",
-    "@types/mocha": "^5.2.7",
-    "@types/node": "^10.17.27",
-    "mocha": "^8.0.1",
-    "ts-node": "^7.0.1",
+    "@types/debug": "^4.1.5",
+    "@types/mocha": "^8.0.3",
+    "@types/node": "^14.11.8",
+    "mocha": "^8.1.3",
+    "ts-node": "^9.0.0",
     "tslint": "^5.20.1",
-    "typescript": "^3.9.6"
+    "typescript": "^4.0.3"
   }
 }

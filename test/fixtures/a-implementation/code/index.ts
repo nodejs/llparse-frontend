@@ -1,3 +1,4 @@
+import { And } from './and';
 import { IsEqual } from './is-equal';
 import { Load } from './load';
 import { Match } from './match';
@@ -10,5 +11,5 @@ import { Update } from './update';
 import { Value } from './value';
 
 export default {
-  IsEqual, Load, Match, MulAdd, Or, Span, Store, Test, Update, Value,
+  And, IsEqual, Load, Match, MulAdd, Or, Span, Store, Test, Update, Value,
 };

@@ -2,6 +2,7 @@ import * as code from '../code';
 import { IWrap } from '../wrap';
 
 export interface ICodeImplementation {
+  readonly And: new(c: code.And) => IWrap<code.And>;
   readonly IsEqual: new(c: code.IsEqual) => IWrap<code.IsEqual>;
   readonly Load: new(c: code.Load) => IWrap<code.Load>;
   readonly Match: new(c: code.Match) => IWrap<code.Match>;
